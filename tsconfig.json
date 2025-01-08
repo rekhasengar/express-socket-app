@@ -1,6 +1,14 @@
 // This is a "Solution Style" tsconfig.json file, and is used by editors and TypeScript’s language server to improve development experience.
 // It is not intended to be used to perform a compilation.
 {
+  "ts-node": {
+    "files": true,
+    "require": ["tsconfig-paths/register"]
+  },
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    },
   "files": [],
   "include": [],
   "references": [

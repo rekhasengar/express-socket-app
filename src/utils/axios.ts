@@ -1,23 +1,22 @@
-import axios, { AxiosRequestConfig, AxiosResponse, Method, } from "axios";
-import { serverConfig } from "../../config/common";
+import axios, { AxiosRequestConfig, AxiosResponse, Method } from 'axios';
+import { serverConfig } from '../config/common';
 
 export class AxiosUtils {
-
   private async request<T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     const axiosResponse = await axios.request<T>({
       ...config,
-      timeout: config.timeout || serverConfig.axiosRequestTimeout
+      timeout: config.timeout || serverConfig.axiosRequestTimeout,
     });
     return axiosResponse;
   }
- 
+
   public async getRequest<T>(url: string, options: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     const method: Method = 'GET';
     const config = {
       url,
       method: method,
-      ...options
-    }
+      ...options,
+    };
     return await this.request<T>(config);
   }
 
@@ -26,8 +25,8 @@ export class AxiosUtils {
     const config = {
       url,
       method,
-      ...options
-    }
+      ...options,
+    };
     const postResponse = await this.request<T>(config);
     return postResponse;
   }
@@ -37,8 +36,8 @@ export class AxiosUtils {
     const config = {
       url,
       method,
-      ...options
-    }
+      ...options,
+    };
     const putResponse = await this.request<T>(config);
     return putResponse;
   }
@@ -48,10 +47,9 @@ export class AxiosUtils {
     const config = {
       url,
       method,
-      ...options
-    }
+      ...options,
+    };
     const deleteResponse = await this.request<T>(config);
     return deleteResponse;
   }
-
 }

@@ -1,4 +1,5 @@
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
+config;
 
 type DotEnvResponse = {
   env: NodeJS.ProcessEnv;
@@ -18,7 +19,7 @@ export function loadDotEnv(): DotEnvResponse {
    * Do not ever use dotenv in production. Set all the env variables on cloud.
    */
   if (!dotEnvResponse.isProduction) {
-    dotenv.config({
+    config({
       path: process.env.DOTENV_CONFIG_PATH,
     });
   }

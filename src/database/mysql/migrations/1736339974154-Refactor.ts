@@ -1,0 +1,38 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class Refactor1736339974154 implements MigrationInterface {
+    name = 'Refactor1736339974154'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TABLE \`users\` (\`key\` int NOT NULL AUTO_INCREMENT, \`id\` varchar(36) NOT NULL, \`createAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updateAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deleted\` tinyint NOT NULL DEFAULT 0, \`firstName\` varchar(255) NOT NULL, \`lastName\` varchar(255) NULL, \`email\` varchar(255) NOT NULL, \`password\` varchar(255) NULL, \`isVerified\` bit NOT NULL DEFAULT 0, \`resetPasswordToken\` text NULL, \`refreshToken\` text NULL, \`emailVerificationToken\` text NULL, UNIQUE INDEX \`IDX_a3ffb1c0c8416b9fc6f907b743\` (\`id\`), UNIQUE INDEX \`IDX_97672ac88f789774dd47f7c8be\` (\`email\`), PRIMARY KEY (\`key\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`roles\` (\`key\` int NOT NULL AUTO_INCREMENT, \`id\` varchar(36) NOT NULL, \`createAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updateAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deleted\` tinyint NOT NULL DEFAULT 0, \`name\` varchar(255) NOT NULL, \`description\` text NOT NULL, UNIQUE INDEX \`IDX_c1433d71a4838793a49dcad46a\` (\`id\`), PRIMARY KEY (\`key\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`conversationMembers\` (\`key\` int NOT NULL AUTO_INCREMENT, \`id\` varchar(36) NOT NULL, \`createAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updateAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deleted\` tinyint NOT NULL DEFAULT 0, \`userKey\` int NOT NULL, \`conversationKey\` int NOT NULL, \`roleKey\` int NOT NULL, UNIQUE INDEX \`IDX_f60ce471068d1996d5413d2506\` (\`id\`), PRIMARY KEY (\`key\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`conversations\` (\`key\` int NOT NULL AUTO_INCREMENT, \`id\` varchar(36) NOT NULL, \`createAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updateAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deleted\` tinyint NOT NULL DEFAULT 0, \`name\` varchar(255) NOT NULL, \`isGroupChat\` tinyint NOT NULL, UNIQUE INDEX \`IDX_ee34f4f7ced4ec8681f26bf04e\` (\`id\`), PRIMARY KEY (\`key\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`messages\` (\`key\` int NOT NULL AUTO_INCREMENT, \`id\` varchar(36) NOT NULL, \`createAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updateAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`deleted\` tinyint NOT NULL DEFAULT 0, \`senderKey\` int NOT NULL, \`message\` text NULL, \`conversationKey\` int NOT NULL, UNIQUE INDEX \`IDX_18325f38ae6de43878487eff98\` (\`id\`), PRIMARY KEY (\`key\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`ALTER TABLE \`conversationMembers\` ADD CONSTRAINT \`FK_009fd69d83bb58affa899e7858a\` FOREIGN KEY (\`userKey\`) REFERENCES \`users\`(\`key\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`conversationMembers\` ADD CONSTRAINT \`FK_d191b06e5c87ddd516f4e9a25fb\` FOREIGN KEY (\`conversationKey\`) REFERENCES \`conversations\`(\`key\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`conversationMembers\` ADD CONSTRAINT \`FK_ed76ade811b52288c9063c5ad17\` FOREIGN KEY (\`roleKey\`) REFERENCES \`roles\`(\`key\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`messages\` ADD CONSTRAINT \`FK_21de9e48c6e40d8e3e342ec471b\` FOREIGN KEY (\`senderKey\`) REFERENCES \`users\`(\`key\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`messages\` ADD CONSTRAINT \`FK_dca53a2adcf9567ac21c665e522\` FOREIGN KEY (\`conversationKey\`) REFERENCES \`conversations\`(\`key\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE \`messages\` DROP FOREIGN KEY \`FK_dca53a2adcf9567ac21c665e522\``);
+        await queryRunner.query(`ALTER TABLE \`messages\` DROP FOREIGN KEY \`FK_21de9e48c6e40d8e3e342ec471b\``);
+        await queryRunner.query(`ALTER TABLE \`conversationMembers\` DROP FOREIGN KEY \`FK_ed76ade811b52288c9063c5ad17\``);
+        await queryRunner.query(`ALTER TABLE \`conversationMembers\` DROP FOREIGN KEY \`FK_d191b06e5c87ddd516f4e9a25fb\``);
+        await queryRunner.query(`ALTER TABLE \`conversationMembers\` DROP FOREIGN KEY \`FK_009fd69d83bb58affa899e7858a\``);
+        await queryRunner.query(`DROP INDEX \`IDX_18325f38ae6de43878487eff98\` ON \`messages\``);
+        await queryRunner.query(`DROP TABLE \`messages\``);
+        await queryRunner.query(`DROP INDEX \`IDX_ee34f4f7ced4ec8681f26bf04e\` ON \`conversations\``);
+        await queryRunner.query(`DROP TABLE \`conversations\``);
+        await queryRunner.query(`DROP INDEX \`IDX_f60ce471068d1996d5413d2506\` ON \`conversationMembers\``);
+        await queryRunner.query(`DROP TABLE \`conversationMembers\``);
+        await queryRunner.query(`DROP INDEX \`IDX_c1433d71a4838793a49dcad46a\` ON \`roles\``);
+        await queryRunner.query(`DROP TABLE \`roles\``);
+        await queryRunner.query(`DROP INDEX \`IDX_97672ac88f789774dd47f7c8be\` ON \`users\``);
+        await queryRunner.query(`DROP INDEX \`IDX_a3ffb1c0c8416b9fc6f907b743\` ON \`users\``);
+        await queryRunner.query(`DROP TABLE \`users\``);
+    }
+
+}

@@ -3,8 +3,8 @@
 import { checkToken } from '@src/middlewares/checkToken';
 import express from 'express';
 import AuthController from '../../controllers/v1/auth';
-import { validation } from "../../privateLibs/swagger-generator-express";
-import authRequestModel from "../../requestModels/auth";
+import { validation } from '../../privateLibs/swagger-generator-express';
+import authRequestModel from '../../requestModels/auth';
 
 const { signUp, signIn, resetPassword, forgotPassword, changePassword } = new AuthController();
 
