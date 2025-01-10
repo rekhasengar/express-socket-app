@@ -1,19 +1,19 @@
 import { CustomRequestHandler } from '@src/shared/types/customExpressRequest';
 import expressValidation from './validate';
 import { JoiRequestModel } from './joiRequest';
-import EmptyObjectRequest from '@src/types/request/emptyObjectRequest';
+import EmptyObject from '@src/types/request/emptyObject';
 
 export function doValidation<ReqBody, QueryParams, PathParams, Headers>(
   params: JoiRequestModel<ReqBody, QueryParams, PathParams, Headers>,
-): CustomRequestHandler<PathParams, EmptyObjectRequest, ReqBody, QueryParams> {
+): CustomRequestHandler<PathParams, EmptyObject, ReqBody, QueryParams> {
   return expressValidation(params);
 }
 
 export function joiValidationRequest<
-  PathParams = EmptyObjectRequest,
-  ReqBody = EmptyObjectRequest,
-  QueryParams = EmptyObjectRequest,
-  Headers = EmptyObjectRequest,
+  PathParams = EmptyObject,
+  ReqBody = EmptyObject,
+  QueryParams = EmptyObject,
+  Headers = EmptyObject,
 >(
   schema: JoiRequestModel<ReqBody, QueryParams, PathParams, Headers>,
 ): JoiRequestModel<ReqBody, QueryParams, PathParams, Headers> {

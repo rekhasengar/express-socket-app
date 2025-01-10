@@ -1,6 +1,5 @@
+import EmptyObject from '@src/types/request/emptyObject';
 import Joi from 'joi';
-
-import EmptyObjectRequest from '@src/types/request/emptyObjectRequest';
 
 type JoiRequest<T> = {
   [key in keyof T]: JoiType<T[key]>;
@@ -20,24 +19,24 @@ type JoiType<Type> = Type extends string
   : never;
 
 export type JoiRequestModelInternal<ReqBody, QueryParams, PathParams, Headers> = {
-  path: PathParams extends EmptyObjectRequest ? EmptyObjectRequest : JoiRequest<PathParams>;
-  body: ReqBody extends EmptyObjectRequest ? EmptyObjectRequest : JoiRequest<ReqBody>;
-  query: QueryParams extends EmptyObjectRequest ? EmptyObjectRequest : JoiRequest<QueryParams>;
-  header: Headers extends EmptyObjectRequest ? EmptyObjectRequest : JoiRequest<Headers>;
+  path: PathParams extends EmptyObject ? EmptyObject : JoiRequest<PathParams>;
+  body: ReqBody extends EmptyObject ? EmptyObject : JoiRequest<ReqBody>;
+  query: QueryParams extends EmptyObject ? EmptyObject : JoiRequest<QueryParams>;
+  header: Headers extends EmptyObject ? EmptyObject : JoiRequest<Headers>;
   model: string;
   group: string;
   description: string;
 };
 
 export type JoiRequestModel<
-  ReqBody = EmptyObjectRequest,
-  QueryParams = EmptyObjectRequest,
-  PathParams = EmptyObjectRequest,
-  Headers = EmptyObjectRequest,
+  ReqBody = EmptyObject,
+  QueryParams = EmptyObject,
+  PathParams = EmptyObject,
+  Headers = EmptyObject,
 > = Pick<
   JoiRequestModelInternal<ReqBody, QueryParams, PathParams, Headers>,
-  | (PathParams extends EmptyObjectRequest ? never : 'path')
-  | (QueryParams extends EmptyObjectRequest ? never : 'query')
-  | (ReqBody extends EmptyObjectRequest ? never : 'body')
-  | (Headers extends EmptyObjectRequest ? never : 'header')
+  | (PathParams extends EmptyObject ? never : 'path')
+  | (QueryParams extends EmptyObject ? never : 'query')
+  | (ReqBody extends EmptyObject ? never : 'body')
+  | (Headers extends EmptyObject ? never : 'header')
 >;

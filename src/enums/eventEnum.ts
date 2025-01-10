@@ -7,9 +7,8 @@ enum EventEnum {
   LEAVE_CONVERSATION_EVENT = 'leaveConversation',
   UPDATE_GROUP_NAME_EVENT = 'updateGroupName',
   MESSAGE_DELETE_EVENT = 'messageDeleted',
-  REGISTER_EVENT = '',
-  CREATE_CONVERSATION = '',
-  ADD_USER = '',
+  CREATE_CONVERSATION = 'conversationCreated',
+  ADD_USER = 'userAdded',
   SOCKET_ERROR_EVENT = 'socketError',
 }
 

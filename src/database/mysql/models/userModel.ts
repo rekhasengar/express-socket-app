@@ -1,22 +1,24 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { BeforeInsert, Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 
 import { MessageModel } from './messageModel';
 import { ModelTemplate } from './modelTemplate';
 import { ConversationMemberModel } from './conversationMemberModel';
+import { SocketModel } from './socketModel';
 
 @Entity({ name: 'users' })
 export class UserModel extends ModelTemplate {
   @Column('varchar')
   public firstName: string;
 
-  @Column('varchar', { nullable: true })
-  public lastName: string | null;
+  @Column('varchar')
+  public lastName: string;
 
   @Column('varchar', { unique: true })
   public email: string;
 
-  @Column('varchar', { nullable: true })
-  public password: string | null;
+  @Column('varchar')
+  public password: string;
 
   @Column('bit', { default: false })
   public isVerified: boolean;
@@ -30,7 +32,7 @@ export class UserModel extends ModelTemplate {
   @Column('text', { nullable: true })
   public emailVerificationToken: string | null;
 
-  @Column('bit')
+  @Column('bit', { default: false })
   public isLoginEnabled: boolean;
 
   @OneToMany(() => ConversationMemberModel, (conversationMember) => conversationMember.user)
@@ -38,4 +40,13 @@ export class UserModel extends ModelTemplate {
 
   @OneToMany(() => MessageModel, (message) => message.sender)
   public messages: MessageModel[];
+
+  @OneToOne(() => SocketModel, (socket) => socket.user)
+  @JoinColumn()
+  public socket: SocketModel;
+
+  @BeforeInsert()
+  public async encryptPassword(): Promise<void> {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
 }

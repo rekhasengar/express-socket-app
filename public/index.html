@@ -1,0 +1,84 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.io Authentication</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h2>Login and Connect to Socket.io</h2>
+
+    <div id="login">
+        <input id="email" type="email" placeholder="Enter Email">
+        <input id="password" type="password" placeholder="Enter Password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="chat" style="display:none;">
+        <input id="message" type="text" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+        <ul id="messages"></ul>
+    </div>
+
+    <script>
+        let socket;
+        let token = "";
+
+        async function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch("http://localhost:3000/api/v2/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.token) {
+                    token = data.token;
+                    alert("Login Successful!");
+
+                    // Hide login form & show chat
+                    document.getElementById("login").style.display = "none";
+                    document.getElementById("chat").style.display = "block";
+
+                    // Connect socket with token
+                    connectSocket();
+                } else {
+                    alert("Login Failed!");
+                }
+            } catch (error) {
+                console.error("Login error:", error);
+            }
+        }
+
+        function connectSocket() {
+            socket = io("http://localhost:3000", {
+                auth: { token }
+            });
+
+            socket.on("connect", () => {
+                console.log("Connected to WebSocket with token");
+            });
+
+            socket.on("message", (msg) => {
+                const li = document.createElement("li");
+                li.textContent = msg;
+                document.getElementById("messages").appendChild(li);
+            });
+        }
+
+        function sendMessage() {
+            const message = document.getElementById("message").value;
+            socket.emit("message", message);
+            document.getElementById("message").value = "";
+        }
+    </script>
+</body>
+</html>
+
+ -->

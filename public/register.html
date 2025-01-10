@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register</title>
+  </head>
+  <body>
+    <h1>Register</h1>
+    <form id="register-form">
+      <label>FirstName:</label>
+      <input id="reg-firstname" type="text" required /><br />
+      <label>LastName:</label>
+      <input id="reg-lastname" type="text" required /><br />
+      <label>Email:</label>
+      <input id="reg-email" type="text" required /><br />
+      <label>Password:</label>
+      <input id="reg-password" type="password" required /><br />
+      <button type="button" onclick="register()">Register</button>
+    </form>
+
+    <script>
+      async function register() {
+        const firstname = document.getElementById('reg-firstname').value;
+        const lastname = document.getElementById('reg-lastname').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+
+        try {
+          const userRegisterResponse = await fetch('/api/v2/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firstname, lastname, email, password }),
+          });
+          const parsedResponse = await userRegisterResponse.json();
+          if (parsedResponse.status === 200) {
+            window.location.href = '/login.html';
+          }
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+    </script>
+  </body>
+</html>

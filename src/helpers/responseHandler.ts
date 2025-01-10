@@ -53,11 +53,13 @@ export default class ResponseHandler {
     return this.res.status(status).send(errorResponse);
   }
 
-  handleError(locale: string, error: Error): Response {
+  //TODO
+  handleError(locale: string, error: unknown): Response {
     if (error instanceof CustomErrorHandler) {
       const { status, message, code } = error;
       return this.errorResponse(status, message, code);
     }
+
     if (error instanceof Error) {
       return this.errorResponse(500, error.message, INTERNAL_SERVER_ERROR, error.stack);
     }

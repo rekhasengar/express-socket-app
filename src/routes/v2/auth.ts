@@ -6,19 +6,19 @@ import { PathParams, QueryParams, RequestBody, ResponseBody } from '@src/shared/
 import { doValidation } from '@src/helpers/joiValidator';
 import ConversationSchema from '@src/helpers/joiValidator/schemas/conversation';
 import { UserLoginRequest, UserRegisterRequest } from '@src/types/request/userRequest';
-import { UserResponse } from '@src/types/response/userResponse';
+import { RegisterUserResponse } from '@src/types/response/userResponse';
 
 const authRoute = Router();
 
-authRoute.post<PathParams, ResponseBody<UserResponse>, RequestBody<UserRegisterRequest>, QueryParams>(
+authRoute.post<PathParams, RegisterUserResponse, UserRegisterRequest, QueryParams>(
   '/register',
   doValidation(ConversationSchema.RegisterRequest),
   (...args) => {
-    AuthContext.getAuthController.userRegistration(...args);
+    AuthContext.getAuthController.registerUser(...args);
   },
 );
 
-authRoute.post<PathParams, ResponseBody<UserResponse>, RequestBody<UserLoginRequest>, QueryParams>(
+authRoute.post<PathParams, ResponseBody<RegisterUserResponse>, RequestBody<UserLoginRequest>, QueryParams>(
   '/login',
   doValidation(ConversationSchema.LoginRequest),
   (...args) => {

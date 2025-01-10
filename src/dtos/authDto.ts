@@ -1,0 +1,24 @@
+import { UserLoginRequest, UserRegisterRequest } from '@src/types/request/userRequest';
+
+export class UserLoginDto {
+  email: string;
+  password: string;
+  constructor(body: UserLoginRequest) {
+    this.email = body.email.trim();
+    this.password = body.password.trim();
+  }
+}
+
+export class UserRegisterDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+
+  constructor(body: UserRegisterRequest) {
+    this.firstName = body.firstname.trim();
+    this.lastName = body.lastname.trim();
+    this.email = body.email.trim();
+    this.password = body.password.trim();
+  }
+}

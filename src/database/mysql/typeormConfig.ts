@@ -7,8 +7,9 @@ import { ConversationModel } from './models/conversationModel';
 import { UserModel } from './models/userModel';
 import { ConversationMemberModel } from './models/conversationMemberModel';
 import { RoleModel } from './models/roleModel';
+import { SocketModel } from './models/socketModel';
 
-export const ENTITIES = [UserModel, ConversationModel, MessageModel, ConversationMemberModel, RoleModel];
+export const ENTITIES = [UserModel, ConversationModel, MessageModel, ConversationMemberModel, RoleModel, SocketModel];
 
 const env = process.env;
 

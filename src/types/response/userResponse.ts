@@ -1,4 +1,3 @@
-export type UserResponse = {
+export type RegisterUserResponse = {
   message: string;
-  body?: any;
 };

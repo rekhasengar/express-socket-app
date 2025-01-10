@@ -1,19 +1,20 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-import { DEFAULT_LOCALE, isProduction, serverConfig, SUPPORTED_LOCALE } from './config';
 import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
-import { serveSwagger } from '../src/privateLibs/swagger-generator-express';
 import path from 'path';
 import fs from 'fs';
+// import helmet from 'helmet';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+
+import { serveSwagger } from '../src/privateLibs/swagger-generator-express';
 import RequestContext from './helpers/context';
 import ResponseHandler from './helpers/responseHandler';
-import helmet from 'helmet';
+import { DEFAULT_LOCALE, isProduction, serverConfig, SUPPORTED_LOCALE } from './config';
+import { initializeSocketIO } from './socket/socketIntialize';
 import EmailService from './utils/email';
 import { AppDataSource } from './database/mysql/typeormConfig';
 import constants from './constants';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import { initializeSocketIO } from './socket/socketIntialize';
+import CustomError from './shared/errorHandler/customError';
 // const blockedAt = require('blocked-at');
 
 const app = express();
@@ -23,11 +24,13 @@ if (!isProduction) {
 }
 
 app.use(cors());
-app.use(helmet());
+// app.use(helmet());
 
 // request payload middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+
 //app.use(useragent.express());
 
 // This is usually caused by synchronous operations that delay the event loop, such as long loop , disk I/O, or database operations.
@@ -52,7 +55,7 @@ const io = new Server(httpServer, {
   },
 });
 
-app.set('io', io);
+app.set('io', io); //`io` instance on the app to avoid usage of `global`
 
 initializeSocketIO(io);
 
@@ -171,6 +174,9 @@ app.get('*', function (req: Request, res: Response, _next: NextFunction) {
 // error handler middleware
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use(function (err: Error, req: Request, res: Response, _next: NextFunction) {
+  if (err instanceof CustomError) {
+    return CustomError.errorHandler(err, res);
+  }
   let locale = (req.headers['Accept-Language'] as string) || DEFAULT_LOCALE;
   locale = SUPPORTED_LOCALE.includes(locale) ? locale : DEFAULT_LOCALE;
   const response = new ResponseHandler(req, res);

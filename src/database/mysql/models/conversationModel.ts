@@ -3,6 +3,7 @@ import { Column, Entity, OneToMany } from 'typeorm';
 import { MessageModel } from './messageModel';
 import { ModelTemplate } from './modelTemplate';
 import { ConversationMemberModel } from './conversationMemberModel';
+import { SocketModel } from './socketModel';
 
 @Entity({ name: 'conversations' })
 export class ConversationModel extends ModelTemplate {
@@ -17,4 +18,7 @@ export class ConversationModel extends ModelTemplate {
 
   @OneToMany(() => MessageModel, (message) => message.conversation)
   public messages: MessageModel[];
+
+  @OneToMany(() => SocketModel, (socket) => socket.conversation)
+  public socket: SocketModel;
 }

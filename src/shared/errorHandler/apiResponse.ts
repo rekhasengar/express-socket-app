@@ -2,9 +2,9 @@ import HttpStatus from 'http-status-codes';
 
 import { ErrorResponseBody } from './apiErrorResponseBody';
 import { INTERNAL_SERVER_ERROR } from '@src/config/messages/codes';
-import EmptyObjectRequest from '@src/types/request/emptyObjectRequest';
+import EmptyObject from '@src/types/request/emptyObject';
 
-export class ApiResponse<T = EmptyObjectRequest> {
+export class ApiResponse<T = EmptyObject> {
   public status: number = HttpStatus.BAD_REQUEST;
   public message = '';
   public body: T = <T>{};
