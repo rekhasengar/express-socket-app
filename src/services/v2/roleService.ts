@@ -1,4 +1,4 @@
-import { SUCCESS_MESSAGE } from '@src/constants';
+import { ROLE_MESSAGES } from '@src/constants/messages';
 import { RoleModel } from '@src/database/mysql/models/roleModel';
 import { RoleDto } from '@src/dtos/roleDto';
 import RoleRepository from '@src/repositories/v2/roleRepository';
@@ -17,7 +17,7 @@ export default class RoleService {
     roleModel.description = roleDto.description;
     await this._roleRepository.addOrUpdateRoles([roleModel]);
     return {
-      message: SUCCESS_MESSAGE.ROLE_ADDED_SUCCESSFULLY,
+      message: ROLE_MESSAGES.ROLE_ADDED_SUCCESSFULLY,
     };
   }
 

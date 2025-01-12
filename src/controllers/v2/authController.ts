@@ -4,7 +4,7 @@ import HttpStatusCode from 'http-status-codes';
 import { ApiResponse } from '@src/shared/errorHandler/apiResponse';
 import CustomRequest from '@src/shared/types/customExpressRequest';
 import AuthService from '@service/v2/authService';
-import { CONTROLLER_MESSAGE } from '@src/constants';
+import { CONTROLLER_MESSAGE } from '@src/constants/messages';
 import CustomError from '@src/shared/errorHandler/customError';
 import { UserLoginRequest, UserLogoutPathRequest, UserRegisterRequest } from '@src/types/request/userRequest';
 import { AuthResponse, UserLoginResponse } from '@src/types/response/userResponse';
@@ -66,10 +66,11 @@ export default class AuthController {
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<AuthResponse>();
+    const { context } = req;
 
     try {
       const userLogoutDto = new UserLogoutDto(req.params);
-      const responseFromService = await this._authService.userLogout(userLogoutDto);
+      const responseFromService = await this._authService.userLogout(userLogoutDto, context);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

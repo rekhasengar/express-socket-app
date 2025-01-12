@@ -21,9 +21,10 @@ export default class UserRepository {
     return await this._userModel.findOne({ where });
   }
 
-  public async getUserById(userId: string): Promise<UserModel | null> {
+  public async getUserByUserId(userId: string, relations?: string[]): Promise<UserModel | null> {
     return await this._userModel.findOne({
       where: { id: userId },
+      relations,
     });
   }
 
@@ -55,5 +56,44 @@ export default class UserRepository {
 
   public async createNewUser(user: UserModel): Promise<void> {
     await this._userModel.insert(user);
+  }
+
+  public async getUserConversationsForGetConversationApi(userId: string): Promise<UserModel | null> {
+    return await this._userModel.findOne({
+      select: {
+        key: true,
+        conversationMembers: {
+          key: true,
+          conversation: {
+            key: true,
+            id: true,
+            name: true,
+            isGroupChat: true,
+            members: {
+              id: true,
+              key: true,
+              role: {
+                key: true,
+                name: true,
+              },
+              user: {
+                key: true,
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
+      where: { id: userId },
+      relations: [
+        'conversationMembers',
+        'conversationMembers.conversation',
+        'conversationMembers.conversation.members',
+        'conversationMembers.conversation.members.role',
+        'conversationMembers.conversation.members.user',
+      ],
+    });
   }
 }

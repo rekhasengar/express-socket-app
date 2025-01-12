@@ -1,0 +1,13 @@
+1) add logs
+2) add nodemon
+3) add token
+4) one to one conversation
+5) group conversation
+7)visible online status
+8) verify email
+9)register user
+10)Login user (password match)
+11)user can remove themself
+13)admin(add user, remove user, update role,change group name)
+14)delete msg
+15)message status(read,delivered,send)

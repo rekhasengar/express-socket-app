@@ -1,4 +1,4 @@
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { MessageModel } from '@src/database/mysql/models/messageModel';
 import { AppDataSource } from '@src/database/mysql/typeormConfig';
@@ -14,7 +14,15 @@ export default class MessageRepository {
     await this._messageModel.insert(messageModel);
   }
 
-  public async deleteSingleMessage(where: FindOptionsWhere<MessageModel>): Promise<void> {
-    await this._messageModel.delete(where);
+  public async deleteSingleMessage(senderId: string, messageId: string, conversationId: string): Promise<void> {
+    await this._messageModel.delete({
+      id: messageId,
+      sender: {
+        id: senderId,
+      },
+      conversation: {
+        id: conversationId,
+      },
+    });
   }
 }

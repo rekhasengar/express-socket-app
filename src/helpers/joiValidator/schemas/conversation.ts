@@ -1,24 +1,31 @@
 import Joi from 'joi';
 
 import { joiValidationRequest } from '@src/helpers/joiValidator/index';
-import { MESSAGE_VALIDATION } from '@src/constants';
-import { UserLoginRequest, UserRegisterRequest } from '@src/types/request/userRequest';
 import EmptyObject from '@src/types/request/emptyObject';
+import { CreateConversationRequest, DeleteConversationMessagePathParams } from '@src/types/request/conversationRequest';
+import { MESSAGE_VALIDATION } from '@src/constants';
 
 export = {
-  RegisterRequest: joiValidationRequest<EmptyObject, UserRegisterRequest, EmptyObject, EmptyObject>({
+  CreateConversationRequest: joiValidationRequest<EmptyObject, CreateConversationRequest, EmptyObject, EmptyObject>({
     body: {
-      firstName: Joi.string().required().description(MESSAGE_VALIDATION.FIST_NAME),
-      lastName: Joi.string().required().description(MESSAGE_VALIDATION.LAST_NAME),
-      email: Joi.string().required().email().description(MESSAGE_VALIDATION.EMAIL),
-      password: Joi.string().required().description(MESSAGE_VALIDATION.PASSWORD),
+      userId: Joi.array()
+        .items(Joi.string().required())
+        .min(1) // At least one userId must be provided
+        .required()
+        .description(MESSAGE_VALIDATION.USER_ID),
+      groupName: Joi.string().required().description(MESSAGE_VALIDATION.GROUP_NAME),
     },
   }),
 
-  LoginRequest: joiValidationRequest<EmptyObject, UserLoginRequest, EmptyObject, EmptyObject>({
-    body: {
-      email: Joi.string().required().email().description(MESSAGE_VALIDATION.EMAIL),
-      password: Joi.string().required().description(MESSAGE_VALIDATION.PASSWORD),
+  DeleteConversationRequest: joiValidationRequest<
+    DeleteConversationMessagePathParams,
+    EmptyObject,
+    EmptyObject,
+    EmptyObject
+  >({
+    path: {
+      conversationId: Joi.string().required().description(MESSAGE_VALIDATION.CONVERSATION_ID),
+      messageId: Joi.string().required().description(MESSAGE_VALIDATION.MESSAGE_ID),
     },
   }),
 };

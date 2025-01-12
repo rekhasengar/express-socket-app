@@ -15,3 +15,35 @@ http://localhost:3000/api/v2/conversations/current-users
 
 logout page
 http://localhost:3000/api/v2/auth/logout/:userId
+
+
+
+
+
+{
+    //monitor changes in files and automatically restart the application. Typing rs in the terminal when nodemon is active will restart the application.
+  "restartable": "rs",
+
+  // Ignore Git-related files and directories.//Ignore node_modules directories and any nested//
+  "ignore": [".git", "node_modules/**/node_modules"],
+
+  //Enables verbose logging, which provides detailed information about the file changes and events nodemon is monitoring.
+  "verbose": true,
+
+  //Specifies how to execute files with specific extensions.
+  "execMap": {
+    "ts": "node --require ts-node/register"
+  },
+
+  //Indicates the directories or files that nodemon should monitor for changes.
+  "watch": ["src/"],
+
+  //NODE_ENV is set to development, which is commonly used to differentiate development configurations from production ones.
+  "env": {
+    "NODE_ENV": "development"
+  },
+  
+  //
+  "exec": "yarn build && yarn start",
+  "ext": "js,json,ts"
+}

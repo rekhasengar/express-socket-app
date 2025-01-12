@@ -4,7 +4,7 @@ import { API_ROUTE } from '@src/constants';
 import AuthContext from '@src/context/authContext';
 import { PathParams, QueryParams, RequestBody, ResponseBody } from '@src/shared/types/customExpressRequest';
 import { doValidation } from '@src/helpers/joiValidator';
-import ConversationSchema from '@src/helpers/joiValidator/schemas/conversation';
+import AuthSchema from '@src/helpers/joiValidator/schemas/auth';
 import { UserLoginRequest, UserLogoutPathRequest, UserRegisterRequest } from '@src/types/request/userRequest';
 import { AuthResponse } from '@src/types/response/userResponse';
 
@@ -12,7 +12,7 @@ const authRoute = Router();
 
 authRoute.post<PathParams, AuthResponse, UserRegisterRequest, QueryParams>(
   '/register',
-  doValidation(ConversationSchema.RegisterRequest),
+  doValidation(AuthSchema.RegisterRequest),
   (...args) => {
     AuthContext.getAuthController.registerUser(...args);
   },
@@ -20,7 +20,7 @@ authRoute.post<PathParams, AuthResponse, UserRegisterRequest, QueryParams>(
 
 authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<UserLoginRequest>, QueryParams>(
   '/login',
-  doValidation(ConversationSchema.LoginRequest),
+  doValidation(AuthSchema.LoginRequest),
   (...args) => {
     AuthContext.getAuthController.userLogin(...args);
   },

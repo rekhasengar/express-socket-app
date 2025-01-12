@@ -12,13 +12,6 @@ export default class ConversationMemberService {
     await this._conversationMemberRepository.insertConversationMembers(conversationMemberModels);
   }
 
-  // public async checkUserAlreadyExistsInConversation(
-  //   userId: string,
-  //   conversationId: number,
-  // ): Promise<ConversationMemberModel | null> {
-  //   return await this._conversationMemberRepository.checkUserAlreadyExistsInConversation(userId, conversationId);
-  // }
-
   public async addUserInConversationMember(data: ConversationMemberModel): Promise<void> {
     await this._conversationMemberRepository.addUserInConversationMember(data);
   }
@@ -41,9 +34,4 @@ export default class ConversationMemberService {
   public async deleteSingleConversation(conversationId: number): Promise<void> {
     await this._conversationMemberRepository.deleteSingleConversation({ key: conversationId });
   }
-
-  // public async updateUserRole(userId: number, conversationId: number, roleId: number): Promise<void>
-  // {
-  //   await this._conversationMemberRepository.updateUserRole()
-  // }
 }

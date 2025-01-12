@@ -8,8 +8,8 @@ export default class UserService {
     this._userRepository = new UserRepository();
   }
 
-  public async getUserById(userId: string): Promise<UserModel | null> {
-    return await this._userRepository.getUserById(userId);
+  public async getUserByUserId(userId: string, relations?: string[]): Promise<UserModel | null> {
+    return await this._userRepository.getUserByUserId(userId, relations);
   }
 
   public async updateUserByUserId(userId: string): Promise<void> {
@@ -37,5 +37,9 @@ export default class UserService {
 
   public async getAllUserByIds(userIds: Array<string>): Promise<Array<UserModel>> {
     return await this._userRepository.getAllUserById(userIds);
+  }
+
+  public async getUserConversationsForGetConversationApi(userId: string): Promise<UserModel | null> {
+    return await this._userRepository.getUserConversationsForGetConversationApi(userId);
   }
 }

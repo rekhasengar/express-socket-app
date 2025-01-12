@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import HttpStatusCode from 'http-status-codes';
 
-import { CONTROLLER_MESSAGE } from '@src/constants';
+import { CONTROLLER_MESSAGE } from '@src/constants/messages';
 import { ApiResponse } from '@src/shared/errorHandler/apiResponse';
 import CustomError from '@src/shared/errorHandler/customError';
 import CustomRequest from '@src/shared/types/customExpressRequest';

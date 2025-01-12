@@ -23,7 +23,7 @@ export default class MessageService {
     await this._messageRepository.insertMessage(messageModel);
   }
 
-  public async deleteSingleMessage(senderId: number, messageId: number): Promise<void> {
-    await this._messageRepository.deleteSingleMessage({ senderKey: senderId, key: messageId });
+  public async deleteSingleMessage(senderId: string, messageId: string, conversationId: string): Promise<void> {
+    await this._messageRepository.deleteSingleMessage(senderId, messageId, conversationId);
   }
 }

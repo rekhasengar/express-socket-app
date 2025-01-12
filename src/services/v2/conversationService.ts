@@ -1,18 +1,24 @@
 import HttpStatusCode from 'http-status-codes';
 
-import { ERROR_MESSAGES, SUCCESS_MESSAGE, USER_CHAT_TYPE } from '@src/constants';
+import { LOGS, LOGS_ACTIONS, USER_CHAT_TYPE } from '@src/constants';
 import UserService from './userService';
-import { ConversationResponse, GetActiveUsersResponse } from '@src/types/response/conversationResponse';
+import {
+  ConversationResponse,
+  GetActiveUsersResponse,
+  GetConversationsResponse,
+} from '@src/types/response/conversationResponse';
 import CustomError from '@src/shared/errorHandler/customError';
 import ConversationRepository from '@src/repositories/v2/conversationRepository';
 import { ConversationModel } from '@src/database/mysql/models/conversationModel';
-import { CreateConversationDto, DeleteConversationDto } from '@src/dtos/conversationDto';
+import { CreateConversationDto, DeleteConversationMessageDto } from '@src/dtos/conversationDto';
 import ConversationMemberService from './conversationMemberService';
 import { ConversationMemberModel } from '@src/database/mysql/models/conversationMemberModel';
 import MessageService from './messageService';
 import { UserModel } from '@src/database/mysql/models/userModel';
 import { getRoleKeyByName } from '@src/seeders/roleSeeder';
 import RolesEnum from '@src/enums/rolesEnum';
+import { CONVERSATION_MESSAGES, USER_MESSAGES } from '@src/constants/messages';
+import RequestContext from '@src/helpers/context';
 
 export default class ConversationService {
   private readonly _userService: UserService;
@@ -32,51 +38,99 @@ export default class ConversationService {
   }
 
   //TODO: need to move in to the users.
-  public async getAllActiveUserList(): Promise<GetActiveUsersResponse> {
+  public async getAllActiveUserList(context: RequestContext): Promise<GetActiveUsersResponse> {
     const users = await this._userService.getCurrentActiveAllUsers();
     if (!users) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, ERROR_MESSAGES.ACTIVE_USERS_NOT_FOUND);
+      context.logError({
+        message: USER_MESSAGES.ACTIVE_USERS_NOT_FOUND,
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this.getAllActiveUserList.name),
+        action: LOGS_ACTIONS.CONVERSATION,
+      });
+      throw new CustomError(HttpStatusCode.NOT_FOUND, USER_MESSAGES.ACTIVE_USERS_NOT_FOUND);
     }
+    context.logInfo({
+      message: USER_MESSAGES.GET_ALL_ACTIVE_USERS_LIST,
+      source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this.getAllActiveUserList.name),
+      action: LOGS_ACTIONS.CONVERSATION,
+    });
     return {
       users: users,
     };
   }
 
-  public async createNewConversation(createConversationDto: CreateConversationDto): Promise<ConversationResponse> {
+  public async createNewConversation(
+    createConversationDto: CreateConversationDto,
+    context: RequestContext,
+  ): Promise<ConversationResponse> {
     if (!createConversationDto.usersId.length) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, ERROR_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION);
+      context.logError({
+        message: USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION,
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this.createNewConversation.name),
+        action: LOGS_ACTIONS.CONVERSATION,
+      });
+      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION);
     }
     if (createConversationDto.usersId.length === 1) {
       await this._createOneToOneConversation(createConversationDto);
-    } else {
-      await this._createGroupConversation(createConversationDto);
     }
+    context.logInfo({
+      message: CONVERSATION_MESSAGES.CONVERSATION_CREATED_SUCCESSFULLY,
+      source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this.createNewConversation.name),
+      action: LOGS_ACTIONS.CONVERSATION,
+    });
     return {
-      message: SUCCESS_MESSAGE.CONVERSATION_CREATED_SUCCESSFULLY,
+      message: CONVERSATION_MESSAGES.CONVERSATION_CREATED_SUCCESSFULLY,
     };
   }
 
-  public async deleteSingleConversation(deleteConversationDto: DeleteConversationDto): Promise<ConversationResponse> {
-    await this._messageService.deleteSingleMessage(deleteConversationDto.senderId, deleteConversationDto.messageId);
+  public async deleteConversationMessage(
+    deleteConversationDto: DeleteConversationMessageDto,
+    context: RequestContext,
+  ): Promise<ConversationResponse> {
+    await this._messageService.deleteSingleMessage(
+      deleteConversationDto.userId,
+      deleteConversationDto.messageId,
+      deleteConversationDto.conversationId,
+    );
+    context.logInfo({
+      message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_DELETED_SUCCESSFULLY,
+      source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this.createNewConversation.name),
+      action: LOGS_ACTIONS.CONVERSATION,
+    });
     return {
-      message: SUCCESS_MESSAGE.CONVERSATION_DELETED_SUCCESSFULLY,
+      message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_DELETED_SUCCESSFULLY,
     };
   }
 
-  // public async renameGroup(adminId: string, conversationId: number, groupName: string): Promise<void> {
-  //   const userData = await this._userService.getUserById(adminId);
-  //   if (!userData) {
-  //     throw new CustomError(HttpStatusCode.NOT_FOUND, ERROR_MESSAGES.USERS_NOT_EXISTS);
-  //   }
-  //   const roleData = await this._conversationMemberService.getConversationMemberDetailById(userData.key);
-  //   if (!roleData) {
-  //     throw new CustomError(HttpStatusCode.NOT_FOUND, ERROR_MESSAGES.USER_ROLE_NOT_FOUND);
-  //   }
-  //   if (roleData.role.name !== RolesEnum.ADMIN) {
-  //     throw new CustomError(HttpStatusCode.BAD_REQUEST, ERROR_MESSAGES.ADMIN_CAN_CHANGE_GROUP_NAME);
-  //   }
-  //   await this._conversationRepository.updateConversationName(conversationId, false, groupName);
-  // }
+  public async getConversations(userId: string, context: RequestContext): Promise<GetConversationsResponse> {
+    const user = await this._userService.getUserConversationsForGetConversationApi(userId);
+    if (!user) {
+      context.logError({
+        message: USER_MESSAGES.USER_NOT_FOUND,
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this.createNewConversation.name),
+        action: LOGS_ACTIONS.CONVERSATION,
+      });
+      throw new CustomError(HttpStatusCode.NOT_FOUND, USER_MESSAGES.USER_NOT_FOUND);
+    }
+
+    const conversations = user.conversationMembers.map(
+      (conversationMember: ConversationMemberModel): ConversationModel => {
+        const conversation = conversationMember.conversation;
+        if (!conversation.isGroupChat) {
+          const secondMember = conversation.members.find((member: ConversationMemberModel): boolean => {
+            return member.user.id.toLowerCase() !== userId.toLowerCase();
+          });
+          if (secondMember) {
+            conversation.name = `${secondMember.user.firstName} ${secondMember.user.lastName}`;
+          }
+        }
+        return conversation;
+      },
+    );
+    return {
+      conversations: conversations,
+    };
+  }
 
   private async _createOneToOneConversation(createConversationDto: CreateConversationDto): Promise<void> {
     const { usersId } = createConversationDto;
@@ -98,10 +152,10 @@ export default class ConversationService {
     });
 
     if (!admin) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, ERROR_MESSAGES.USER_NOT_EXISTS);
+      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.ADMIN_NOT_FOUND);
     }
     if (!users) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, ERROR_MESSAGES.USERS_NOT_EXISTS);
+      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.USER_NOT_FOUND);
     }
 
     const conversationModel = new ConversationModel();
@@ -122,48 +176,5 @@ export default class ConversationService {
     }
 
     await this._conversationMemberService.insertConversationMembers(conversationMemberModels);
-  }
-
-  private async _createGroupConversation(createConversationDto: CreateConversationDto): Promise<void> {
-    const { adminId, usersId, groupName } = createConversationDto;
-
-    const [admin, users] = await Promise.all([
-      this._userService.getUserById(adminId),
-      this._userService.getAllUserByIds(usersId),
-    ]);
-
-    if (!admin) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, ERROR_MESSAGES.USER_NOT_EXISTS);
-    }
-    if (!users) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, ERROR_MESSAGES.USERS_NOT_EXISTS);
-    }
-
-    const conversationData = <ConversationModel>{
-      name: groupName,
-      isGroupChat: false,
-    };
-
-    const conversation = await this._conversationRepository.saveConversation(conversationData);
-
-    const adminConversationMember = <ConversationMemberModel>{
-      userKey: admin.key,
-      conversationKey: conversation.key,
-      roleKey: 2,
-    };
-
-    const conversationMemberData: ConversationMemberModel[] = [];
-    for (const user of users) {
-      conversationMemberData.push({
-        userKey: user.key,
-        conversationKey: conversation.key,
-        roleKey: 1,
-      } as ConversationMemberModel);
-    }
-
-    await Promise.all([
-      this._conversationMemberService.addUserInConversationMember(adminConversationMember),
-      this._conversationMemberService.addUsersInConversationMember(conversationMemberData),
-    ]);
   }
 }

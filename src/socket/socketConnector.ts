@@ -17,7 +17,7 @@ export default class SocketConnector {
         const decodedToken = this._checkAndVerifyToken(socket.handshake.auth.token);
         const userId = decodedToken.id;
         const userService = new UserService();
-        const dbUser = await userService.getUserById(userId as string);
+        const dbUser = await userService.getUserByUserId(userId as string);
         if (!dbUser) {
           throw new Error('User not found.');
         }
