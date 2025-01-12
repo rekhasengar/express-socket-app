@@ -1,24 +1,17 @@
-import { Entity, Column, OneToOne, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, JoinColumn, ManyToOne, Index } from 'typeorm';
 import { ModelTemplate } from './modelTemplate';
 import { UserModel } from './userModel';
-import { ConversationModel } from './conversationModel';
 
 @Entity({ name: 'socket' })
 export class SocketModel extends ModelTemplate {
   @Column('varchar')
+  @Index({ unique: true })
   public socketId: string;
 
-  @OneToOne(() => UserModel, (user) => user.socket)
+  @ManyToOne(() => UserModel, (user) => user.sockets)
   @JoinColumn({ name: 'userKey', referencedColumnName: 'key' })
   public user: UserModel;
 
   @Column('int')
   public userKey: number;
-
-  @ManyToOne(() => ConversationModel, (conversation) => conversation.socket)
-  @JoinColumn({ name: 'conversationKey', referencedColumnName: 'key' })
-  public conversation: ConversationModel;
-
-  @Column('int')
-  public conversationKey: number;
 }

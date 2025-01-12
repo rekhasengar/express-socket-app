@@ -6,9 +6,9 @@ import CustomRequest from '@src/shared/types/customExpressRequest';
 import AuthService from '@service/v2/authService';
 import { CONTROLLER_MESSAGE } from '@src/constants';
 import CustomError from '@src/shared/errorHandler/customError';
-import { UserLoginRequest, UserRegisterRequest } from '@src/types/request/userRequest';
-import { RegisterUserResponse } from '@src/types/response/userResponse';
-import { UserRegisterDto, UserLoginDto } from '@src/dtos/authDto';
+import { UserLoginRequest, UserLogoutPathRequest, UserRegisterRequest } from '@src/types/request/userRequest';
+import { AuthResponse, UserLoginResponse } from '@src/types/response/userResponse';
+import { UserRegisterDto, UserLoginDto, UserLogoutDto } from '@src/dtos/authDto';
 import EmptyObject from '@src/types/request/emptyObject';
 
 export default class AuthController {
@@ -19,15 +19,16 @@ export default class AuthController {
   }
 
   public async registerUser(
-    req: Request<EmptyObject, RegisterUserResponse, UserRegisterRequest, EmptyObject>,
-    res: Response<ApiResponse<RegisterUserResponse>>,
+    req: Request<EmptyObject, AuthResponse, UserRegisterRequest, EmptyObject>,
+    res: Response<ApiResponse<AuthResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<RegisterUserResponse>();
+    const response = new ApiResponse<AuthResponse>();
+    const { context } = req;
 
     try {
       const userRegisterDto = new UserRegisterDto(req.body);
-      const responseFromService = await this._authService.registerUser(userRegisterDto);
+      const responseFromService = await this._authService.registerUser(userRegisterDto, context);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
@@ -39,15 +40,36 @@ export default class AuthController {
   }
 
   public async userLogin(
-    req: CustomRequest<EmptyObject, RegisterUserResponse, UserLoginRequest, EmptyObject>,
-    res: Response<ApiResponse<RegisterUserResponse>>,
+    req: CustomRequest<EmptyObject, UserLoginResponse, UserLoginRequest, EmptyObject>,
+    res: Response<ApiResponse<UserLoginResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<RegisterUserResponse>();
+    const response = new ApiResponse<UserLoginResponse>();
+    const { context } = req;
 
     try {
       const userLoginDto = new UserLoginDto(req.body);
-      const responseFromService = await this._authService.userLogin(userLoginDto);
+      const responseFromService = await this._authService.userLogin(userLoginDto, context);
+      response.status = HttpStatusCode.OK;
+      response.message = CONTROLLER_MESSAGE.SUCCESS;
+      response.body = responseFromService;
+      res.status(response.status).send(response);
+    } catch (error) {
+      const customError = CustomError.getCustomErrorObject(error);
+      return next(customError);
+    }
+  }
+
+  public async userLogout(
+    req: CustomRequest<UserLogoutPathRequest, AuthResponse, EmptyObject, EmptyObject>,
+    res: Response<ApiResponse<AuthResponse>>,
+    next: NextFunction,
+  ): Promise<void> {
+    const response = new ApiResponse<AuthResponse>();
+
+    try {
+      const userLogoutDto = new UserLogoutDto(req.params);
+      const responseFromService = await this._authService.userLogout(userLogoutDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

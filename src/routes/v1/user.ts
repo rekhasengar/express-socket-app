@@ -1,10 +1,11 @@
 'use-strict';
 
-import { checkToken } from '@src/middlewares/checkToken';
 import express from 'express';
-import { validation } from "../../privateLibs/swagger-generator-express";
+
+import { checkToken } from '@src/middlewares/checkToken';
+import { validation } from '../../privateLibs/swagger-generator-express';
 import UserController from '../../controllers/v1/user';
-import userRequestModel from "../../requestModels/user";
+import userRequestModel from '../../requestModels/user';
 
 const { getUsers, getUser, updateUser, deleteUser } = new UserController();
 

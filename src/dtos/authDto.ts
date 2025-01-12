@@ -1,4 +1,4 @@
-import { UserLoginRequest, UserRegisterRequest } from '@src/types/request/userRequest';
+import { UserLoginRequest, UserLogoutPathRequest, UserRegisterRequest } from '@src/types/request/userRequest';
 
 export class UserLoginDto {
   email: string;
@@ -16,9 +16,17 @@ export class UserRegisterDto {
   password: string;
 
   constructor(body: UserRegisterRequest) {
-    this.firstName = body.firstname.trim();
-    this.lastName = body.lastname.trim();
+    this.firstName = body.firstName.trim();
+    this.lastName = body.lastName.trim();
     this.email = body.email.trim();
     this.password = body.password.trim();
+  }
+}
+
+export class UserLogoutDto {
+  userId: string;
+
+  constructor(params: UserLogoutPathRequest) {
+    this.userId = params.userId;
   }
 }

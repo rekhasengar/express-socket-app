@@ -4,11 +4,18 @@ import SocketRepository from '@src/repositories/v2/socketRepository';
 export default class SocketService {
   private _socketRepository: SocketRepository;
 
-  constructor(socketRepository: SocketRepository) {
-    this._socketRepository = socketRepository;
+  constructor() {
+    this._socketRepository = new SocketRepository();
   }
 
-  public async getSocketIdsByConversationId(conversationId: number): Promise<Array<SocketModel>> {
-    return await this._socketRepository.getSocketIdsByConversationId(conversationId);
+  public async createSocketModel(socketId: string, userKey: number): Promise<void> {
+    const socketModel = new SocketModel();
+    socketModel.socketId = socketId;
+    socketModel.userKey = userKey;
+    await this._socketRepository.insert(socketModel);
+  }
+
+  public async removeSocket(socketId: string): Promise<void> {
+    await this._socketRepository.remove(socketId);
   }
 }

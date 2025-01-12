@@ -2,8 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const API_ROUTE = {
   AUTH: '/api/v2/auth',
-  CONVERSATION: '/api/v2/conversation',
-  ROLE: '/api/v2/role',
+  CONVERSATIONS: '/api/v2/conversations',
+  ROLES: '/api/v2/roles',
 };
 
 export default {
@@ -43,6 +43,9 @@ export const ERROR_MESSAGES = {
   USER_NOT_EXISTS: 'User not exists.',
   USERS_NOT_EXISTS: 'Users not exists',
   ONE_USER_COMPULSORY_FOR_CONVERSATION: 'At least one user is required for the conversation.',
+  USER_ROLE_NOT_FOUND: 'User Role not exists.',
+  ADMIN_CAN_CHANGE_GROUP_NAME: 'Only admin can change group name.',
+  CONVERSATION_NOT_EXISTS: 'This conversation not exists.',
 };
 
 export const SUCCESS_MESSAGE = {
@@ -51,4 +54,13 @@ export const SUCCESS_MESSAGE = {
   USERS_FETCHED_SUCCESSFULLY: 'All active users fetched.',
   ROLE_ADDED_SUCCESSFULLY: 'Role add successfully.',
   CONVERSATION_CREATED_SUCCESSFULLY: 'Conversation created successfully.',
+  CONVERSATION_DELETED_SUCCESSFULLY: 'Conversation deleted successfully.',
+  LOGOUT_SUCCESSFULLY: 'Logout successfully.',
+  SOCKET_ID_ADDED_SUCCESSFULLY: 'Socket id added successfully.',
+};
+
+export const EVENT_MESSAGE = {
+  NEW_USER_ADDED_IN_GROUP: (username: string): string => {
+    return `${username} added in this group`;
+  },
 };

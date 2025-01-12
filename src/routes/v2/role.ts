@@ -15,4 +15,4 @@ roleRoute.post<PathParams, ResponseBody<RoleResponse>, RequestBody<CreateRoleReq
   },
 );
 
-module.exports = { router: roleRoute, basePath: API_ROUTE.ROLE };
+module.exports = { router: roleRoute, basePath: API_ROUTE.ROLES };

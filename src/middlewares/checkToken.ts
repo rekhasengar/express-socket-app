@@ -16,15 +16,15 @@ export async function checkToken(req: Request, res: Response, next: NextFunction
       return _formErrorMessage(responseHandler, context, locale);
     }
     const token = bearerToken.split('Bearer')[1].trim();
-    const payload = await validateJwtToken(token);
+    const payload = validateJwtToken(token);
     if (payload === null) {
       return _formErrorMessage(responseHandler, context, locale);
     }
     const id = payload.id;
-    const user = await new UserRepository().findUser({ id }, ['id']);
-    if (!user) {
-      return _formErrorMessage(responseHandler, context, locale);
-    }
+    // const user = await new UserRepository().findUser({ id: id as unknown as number }, ['id']);
+    // if (!user) {
+    //   return _formErrorMessage(responseHandler, context, locale);
+    // }
     req.app.locals.userId = id;
     return next();
   } catch (error) {

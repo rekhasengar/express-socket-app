@@ -53,6 +53,7 @@
         "nodemailer": "^6.6.5",
         "sequelize": "^6.6.5",
         "socket.io": "^4.8.1",
+        "socket.io-client": "^4.8.1",
         "swagger-generator-express": "^2.1.1",
         "swagger-ui-express": "^4.1.6",
         "typeorm": "^0.3.20",

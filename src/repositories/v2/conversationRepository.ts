@@ -10,11 +10,11 @@ export default class ConversationRepository {
     this._conversationModel = AppDataSource.getRepository(ConversationModel);
   }
 
-  public async checkGroupExistsOrNot(conversationId: number): Promise<ConversationModel | null> {
-    return await this._conversationModel.findOne({ where: { key: conversationId } });
+  public async getByConversationId(conversationId: string, relations?: string[]): Promise<ConversationModel | null> {
+    return await this._conversationModel.findOne({ where: { id: conversationId }, relations });
   }
 
-  public async addConversation(data: ConversationModel): Promise<ConversationModel> {
-    return await this._conversationModel.save(data);
+  public async saveConversation(conversationModel: ConversationModel): Promise<ConversationModel> {
+    return await this._conversationModel.save(conversationModel);
   }
 }

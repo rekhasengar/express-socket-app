@@ -10,11 +10,12 @@ import { serveSwagger } from '../src/privateLibs/swagger-generator-express';
 import RequestContext from './helpers/context';
 import ResponseHandler from './helpers/responseHandler';
 import { DEFAULT_LOCALE, isProduction, serverConfig, SUPPORTED_LOCALE } from './config';
-import { initializeSocketIO } from './socket/socketIntialize';
 import EmailService from './utils/email';
 import { AppDataSource } from './database/mysql/typeormConfig';
 import constants from './constants';
 import CustomError from './shared/errorHandler/customError';
+import SocketConnector from './socket/socketConnector';
+import processRoleSeeder from './seeders/roleSeeder';
 // const blockedAt = require('blocked-at');
 
 const app = express();
@@ -55,14 +56,13 @@ const io = new Server(httpServer, {
   },
 });
 
-app.set('io', io); //`io` instance on the app to avoid usage of `global`
-
-initializeSocketIO(io);
+SocketConnector.initialize(io);
 
 const xRequestId = constants.GENERATE_UUID_V4();
 (async () => {
   try {
     await AppDataSource.initialize();
+    await processRoleSeeder();
     console.log({ message: constants.MY_SQL_CONNECTED_SUCCESSFULLY });
   } catch (error) {
     console.log({

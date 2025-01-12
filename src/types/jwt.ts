@@ -1,3 +1,3 @@
 export type JWT_OBJECT = {
-  id: number;
+  id: string | number;
 };

@@ -1,5 +1,10 @@
 export type CreateConversationRequest = {
-  userId: Array<number>;
-  adminId: number;
+  userId: Array<string>;
+  adminId: string;
   groupName?: string;
+};
+
+export type DeleteSingleConversationRequest = {
+  senderId: number;
+  messageId: number;
 };

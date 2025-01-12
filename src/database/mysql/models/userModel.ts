@@ -1,4 +1,4 @@
-import { BeforeInsert, Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import { BeforeInsert, Column, Entity, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
 import { MessageModel } from './messageModel';
@@ -41,9 +41,8 @@ export class UserModel extends ModelTemplate {
   @OneToMany(() => MessageModel, (message) => message.sender)
   public messages: MessageModel[];
 
-  @OneToOne(() => SocketModel, (socket) => socket.user)
-  @JoinColumn()
-  public socket: SocketModel;
+  @OneToMany(() => SocketModel, (socket) => socket.user)
+  public sockets: SocketModel[];
 
   @BeforeInsert()
   public async encryptPassword(): Promise<void> {

@@ -10,8 +10,8 @@ export default class RoleRepository {
     this._roleModel = AppDataSource.getRepository(RoleModel);
   }
 
-  public async addRole(data: RoleModel): Promise<void> {
-    await this._roleModel.insert(data);
+  public async addOrUpdateRoles(roleModels: RoleModel[]): Promise<void> {
+    await this._roleModel.save(roleModels);
   }
 
   public async getAllRoleList(): Promise<Array<RoleModel>> {

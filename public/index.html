@@ -1,84 +1,58 @@
-<!-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Socket.io Authentication</title>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-</head>
-<body>
-    <h2>Login and Connect to Socket.io</h2>
-
-    <div id="login">
-        <input id="email" type="email" placeholder="Enter Email">
-        <input id="password" type="password" placeholder="Enter Password">
-        <button onclick="login()">Login</button>
-    </div>
-
-    <div id="chat" style="display:none;">
-        <input id="message" type="text" placeholder="Type a message...">
-        <button onclick="sendMessage()">Send</button>
-        <ul id="messages"></ul>
-    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Whatsapp Chat App</title>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <h1>Whatsapp Chat App</h1>
+    <button id="sendMessageButton">Send Message</button>
 
     <script>
-        let socket;
-        let token = "";
+      // Retrieve the token from localStorage
+      const token = localStorage.getItem('authToken');
 
-        async function login() {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
+      if (!token) {
+        alert('You are not authenticated. Redirecting to login page.');
+        window.location.href = '/login.html';
+      } else {
+        // Connect to the backend using the token
+        const socket = io('http://localhost:3000', {
+          auth: {
+            token: token,
+          },
+        });
 
-            try {
-                const response = await fetch("http://localhost:3000/api/v2/auth/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password })
-                });
+        // Listen for a message from the server
+        socket.on('message', (data) => {
+          console.log('Received message from backend:', data);
+        });
 
-                const data = await response.json();
+        socket.on('connected',() => {
+          console.log("Connected successfully!")
+        })
 
-                if (data.token) {
-                    token = data.token;
-                    alert("Login Successful!");
+        // Send a message to the server
+        document.getElementById('sendMessageButton').addEventListener('click', () => {
+          const payload = {
+            eventType: 'adminAddUserInGroup',
+            socketId: socket.id, // Use the current socket ID
+            data: {
+              conversationId: '693a52c9-dd5c-4028-9197-8fc8f8d0143b',
+              userId: '81b62a92-c55c-4a4b-aac5-de544f905195',
+              message: {
+                id: '81b62a92-c55c-4a4b-aac5-de544f905195',
+                message: 'Hello, How are you',
+                timestamp: new Date().getTime(),
+              },
+            },
+          };
 
-                    // Hide login form & show chat
-                    document.getElementById("login").style.display = "none";
-                    document.getElementById("chat").style.display = "block";
-
-                    // Connect socket with token
-                    connectSocket();
-                } else {
-                    alert("Login Failed!");
-                }
-            } catch (error) {
-                console.error("Login error:", error);
-            }
-        }
-
-        function connectSocket() {
-            socket = io("http://localhost:3000", {
-                auth: { token }
-            });
-
-            socket.on("connect", () => {
-                console.log("Connected to WebSocket with token");
-            });
-
-            socket.on("message", (msg) => {
-                const li = document.createElement("li");
-                li.textContent = msg;
-                document.getElementById("messages").appendChild(li);
-            });
-        }
-
-        function sendMessage() {
-            const message = document.getElementById("message").value;
-            socket.emit("message", message);
-            document.getElementById("message").value = "";
-        }
+          socket.emit('event', payload);
+        });
+      }
     </script>
-</body>
+  </body>
 </html>
-
- -->

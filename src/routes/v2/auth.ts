@@ -5,12 +5,12 @@ import AuthContext from '@src/context/authContext';
 import { PathParams, QueryParams, RequestBody, ResponseBody } from '@src/shared/types/customExpressRequest';
 import { doValidation } from '@src/helpers/joiValidator';
 import ConversationSchema from '@src/helpers/joiValidator/schemas/conversation';
-import { UserLoginRequest, UserRegisterRequest } from '@src/types/request/userRequest';
-import { RegisterUserResponse } from '@src/types/response/userResponse';
+import { UserLoginRequest, UserLogoutPathRequest, UserRegisterRequest } from '@src/types/request/userRequest';
+import { AuthResponse } from '@src/types/response/userResponse';
 
 const authRoute = Router();
 
-authRoute.post<PathParams, RegisterUserResponse, UserRegisterRequest, QueryParams>(
+authRoute.post<PathParams, AuthResponse, UserRegisterRequest, QueryParams>(
   '/register',
   doValidation(ConversationSchema.RegisterRequest),
   (...args) => {
@@ -18,11 +18,18 @@ authRoute.post<PathParams, RegisterUserResponse, UserRegisterRequest, QueryParam
   },
 );
 
-authRoute.post<PathParams, ResponseBody<RegisterUserResponse>, RequestBody<UserLoginRequest>, QueryParams>(
+authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<UserLoginRequest>, QueryParams>(
   '/login',
   doValidation(ConversationSchema.LoginRequest),
   (...args) => {
     AuthContext.getAuthController.userLogin(...args);
+  },
+);
+
+authRoute.post<PathParams<UserLogoutPathRequest>, ResponseBody<AuthResponse>, RequestBody, QueryParams>(
+  '/logout/:userId',
+  (...args) => {
+    AuthContext.getAuthController.userLogout(...args);
   },
 );
 

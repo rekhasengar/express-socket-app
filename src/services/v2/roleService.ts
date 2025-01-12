@@ -12,7 +12,10 @@ export default class RoleService {
   }
 
   public async addRole(roleDto: RoleDto): Promise<RoleResponse> {
-    await this._roleRepository.addRole(roleDto as RoleModel);
+    const roleModel = new RoleModel();
+    roleModel.name = roleDto.name;
+    roleModel.description = roleDto.description;
+    await this._roleRepository.addOrUpdateRoles([roleModel]);
     return {
       message: SUCCESS_MESSAGE.ROLE_ADDED_SUCCESSFULLY,
     };

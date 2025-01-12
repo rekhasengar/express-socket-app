@@ -1,0 +1,17 @@
+register api
+http://localhost:3000/api/v2/auth/register
+
+
+login api
+http://localhost:3000/api/v2/auth/login
+
+
+create conversation api
+http://localhost:3000/api/v2/conversations
+
+
+get current users
+http://localhost:3000/api/v2/conversations/current-users
+
+logout page
+http://localhost:3000/api/v2/auth/logout/:userId

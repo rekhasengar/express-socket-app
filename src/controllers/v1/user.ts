@@ -1,10 +1,16 @@
-import UserService from '@service/user';
-import ResponseHandler from '@src/helpers/responseHandler';
 import { Request, Response } from 'express';
 
+import UserService from '@service/user';
+import ResponseHandler from '@src/helpers/responseHandler';
+
 export default class UserController {
+  private readonly _userService: UserService;
+
+  constructor() {
+    this._userService = new UserService();
+  }
+
   async getUsers(req: Request, res: Response): Promise<Response> {
-    const _userService = new UserService();
     const responseHandler = new ResponseHandler(req, res);
     const queryParams = req.query;
     const getUsersRequest = {
@@ -12,7 +18,7 @@ export default class UserController {
       limit: parseInt(queryParams.limit as string),
     };
     try {
-      const response = await _userService.getUsers(getUsersRequest);
+      const response = await this._userService.getUsers(getUsersRequest);
       return responseHandler.successResponse(response);
     } catch (error) {
       return responseHandler.handleError(req.locale, error as Error);
@@ -20,11 +26,10 @@ export default class UserController {
   }
 
   async getUser(req: Request, res: Response): Promise<Response> {
-    const _userService = new UserService();
     const responseHandler = new ResponseHandler(req, res);
     const userId = req.app.locals.userId;
     try {
-      const response = await _userService.getUser(userId);
+      const response = await this._userService.getUser(userId);
       return responseHandler.successResponse(response);
     } catch (error) {
       return responseHandler.handleError(req.locale, error as Error);
@@ -32,12 +37,11 @@ export default class UserController {
   }
 
   async updateUser(req: Request, res: Response): Promise<Response> {
-    const _userService = new UserService();
     const responseHandler = new ResponseHandler(req, res);
     const userId = req.app.locals.userId;
     const updateUserRequest = req.body;
     try {
-      const response = await _userService.updateUser(userId, updateUserRequest);
+      const response = await this._userService.updateUser(userId, updateUserRequest);
       return responseHandler.successResponse(response);
     } catch (error) {
       return responseHandler.handleError(req.locale, error as Error);
@@ -45,11 +49,10 @@ export default class UserController {
   }
 
   async deleteUser(req: Request, res: Response): Promise<Response> {
-    const _userService = new UserService();
     const responseHandler = new ResponseHandler(req, res);
     const userId = parseInt(req.params.userId);
     try {
-      const response = await _userService.deleteUser(userId);
+      const response = await this._userService.deleteUser(userId);
       return responseHandler.successResponse(response);
     } catch (error) {
       return responseHandler.handleError(req.locale, error as Error);

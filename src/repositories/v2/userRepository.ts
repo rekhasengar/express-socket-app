@@ -21,19 +21,24 @@ export default class UserRepository {
     return await this._userModel.findOne({ where });
   }
 
-  public async getUserById(userId: number): Promise<UserModel | null> {
+  public async getUserById(userId: string): Promise<UserModel | null> {
     return await this._userModel.findOne({
-      where: { key: userId },
+      where: { id: userId },
     });
   }
 
-  public async getAllUserById(userIds: Array<number>): Promise<Array<UserModel>> {
+  public async updateUserByUserId(where: FindOptionsWhere<UserModel>, data: Partial<UserModel>): Promise<void> {
+    await this._userModel.update(where, data);
+  }
+
+  public async getAllUserById(userIds: Array<string>): Promise<Array<UserModel>> {
     return await this._userModel.find({
       where: {
-        key: In(userIds),
+        id: In(userIds),
       },
       select: {
         key: true,
+        id: true,
       },
     });
   }
@@ -44,8 +49,8 @@ export default class UserRepository {
     });
   }
 
-  public async saveUser(user: UserModel): Promise<void> {
-    await this._userModel.save(user);
+  public async saveUser(user: UserModel): Promise<UserModel> {
+    return await this._userModel.save(user);
   }
 
   public async createNewUser(user: UserModel): Promise<void> {

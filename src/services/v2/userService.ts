@@ -4,12 +4,16 @@ import { UserModel } from '@src/database/mysql/models/userModel';
 export default class UserService {
   private readonly _userRepository: UserRepository;
 
-  constructor(userRepository: UserRepository) {
-    this._userRepository = userRepository;
+  constructor() {
+    this._userRepository = new UserRepository();
   }
 
-  public async getUserById(userId: number): Promise<UserModel | null> {
+  public async getUserById(userId: string): Promise<UserModel | null> {
     return await this._userRepository.getUserById(userId);
+  }
+
+  public async updateUserByUserId(userId: string): Promise<void> {
+    await this._userRepository.updateUserByUserId({ id: userId }, { isLoginEnabled: false });
   }
 
   public async getUserByEmail(email: string): Promise<UserModel | null> {
@@ -20,8 +24,8 @@ export default class UserService {
     await this._userRepository.createNewUser(user);
   }
 
-  public async saveUser(user: UserModel): Promise<void> {
-    await this._userRepository.saveUser(user);
+  public async saveUser(user: UserModel): Promise<UserModel> {
+    return await this._userRepository.saveUser(user);
   }
 
   public async getCurrentActiveAllUsers(): Promise<Array<UserModel>> {
@@ -31,7 +35,7 @@ export default class UserService {
     );
   }
 
-  public async getAllUserById(userIds: Array<number>): Promise<Array<UserModel>> {
+  public async getAllUserByIds(userIds: Array<string>): Promise<Array<UserModel>> {
     return await this._userRepository.getAllUserById(userIds);
   }
 }

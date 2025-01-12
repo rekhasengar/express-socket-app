@@ -3,12 +3,12 @@ import HttpStatusCode from 'http-status-codes';
 
 import { ApiResponse } from '@src/shared/errorHandler/apiResponse';
 import CustomRequest from '@src/shared/types/customExpressRequest';
-import { ConversationResponse } from '@src/types/response/conversationResponse';
+import { ConversationResponse, GetActiveUsersResponse } from '@src/types/response/conversationResponse';
 import { CONTROLLER_MESSAGE } from '@src/constants';
 import CustomError from '@src/shared/errorHandler/customError';
 import ConversationService from '@service/v2/conversationService';
-import { CreateConversationRequest } from '@src/types/request/conversationRequest';
-import { CreateConversationDto } from '@src/dtos/conversationDto';
+import { CreateConversationRequest, DeleteSingleConversationRequest } from '@src/types/request/conversationRequest';
+import { CreateConversationDto, DeleteConversationDto } from '@src/dtos/conversationDto';
 import EmptyObject from '@src/types/request/emptyObject';
 
 export default class ConversationController {
@@ -19,11 +19,11 @@ export default class ConversationController {
   }
 
   public async getAllActiveUser(
-    _req: CustomRequest<EmptyObject, ConversationResponse, EmptyObject, EmptyObject>,
-    res: Response<ApiResponse<ConversationResponse>>,
+    _req: CustomRequest<EmptyObject, GetActiveUsersResponse, EmptyObject, EmptyObject>,
+    res: Response<ApiResponse<GetActiveUsersResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<ConversationResponse>();
+    const response = new ApiResponse<GetActiveUsersResponse>();
 
     try {
       const responseFromService = await this._conversationService.getAllActiveUserList();
@@ -46,6 +46,25 @@ export default class ConversationController {
     try {
       const createConversationDto = new CreateConversationDto(req.body);
       const responseFromService = await this._conversationService.createNewConversation(createConversationDto);
+      response.status = HttpStatusCode.OK;
+      response.message = CONTROLLER_MESSAGE.SUCCESS;
+      response.body = responseFromService;
+      res.status(response.status).send(response);
+    } catch (error) {
+      const customError = CustomError.getCustomErrorObject(error);
+      return next(customError);
+    }
+  }
+
+  public async deleteSingleConversation(
+    req: CustomRequest<EmptyObject, ConversationResponse, DeleteSingleConversationRequest, EmptyObject>,
+    res: Response<ApiResponse<ConversationResponse>>,
+    next: NextFunction,
+  ): Promise<void> {
+    const response = new ApiResponse<ConversationResponse>();
+    try {
+      const deleteConversationDto = new DeleteConversationDto(req.body);
+      const responseFromService = await this._conversationService.deleteSingleConversation(deleteConversationDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

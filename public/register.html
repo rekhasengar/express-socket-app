@@ -1,45 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Register</title>
-  </head>
-  <body>
-    <h1>Register</h1>
-    <form id="register-form">
-      <label>FirstName:</label>
-      <input id="reg-firstname" type="text" required /><br />
-      <label>LastName:</label>
-      <input id="reg-lastname" type="text" required /><br />
-      <label>Email:</label>
-      <input id="reg-email" type="text" required /><br />
-      <label>Password:</label>
-      <input id="reg-password" type="password" required /><br />
-      <button type="button" onclick="register()">Register</button>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whatsapp Chat App - Register</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1a1a1a;
+      color: white;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: #2c2c2c;
+      border-radius: 8px;
+      padding: 2rem;
+      width: 400px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .container h1 {
+      font-size: 24px;
+      margin-bottom: 1rem;
+    }
+
+    .container .icon {
+      font-size: 40px;
+      margin-bottom: 1rem;
+    }
+
+    .input-box {
+      width: 100%;
+      background-color: #333;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      padding: 12px 16px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    .input-box:focus {
+      outline: none;
+      border: 1px solid #5757ff;
+    }
+
+    .button {
+      background-color: #5757ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .button:hover {
+      background-color: #4141e0;
+    }
+
+    .link {
+      color: #5757ff;
+      font-size: 14px;
+      text-decoration: none;
+      margin-top: 10px;
+      display: block;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Whatsapp Chat App</h1>
+    <div class="icon">🔒</div>
+    <form id="registerForm">
+      <input id="firstname" type="text" class="input-box" placeholder="Enter the first name..." required>
+      <input id="lastname" type="text" class="input-box" placeholder="Enter the last name..." required>
+      <input id="email" type="email" class="input-box" placeholder="Enter the email..." required>
+      <input id="password" type="password" class="input-box" placeholder="Enter the password..." required>
+      <button type="submit" class="button">Register</button>
     </form>
+    <a href="login.html" class="link">Already have an account? Login</a>
+  </div>
 
-    <script>
-      async function register() {
-        const firstname = document.getElementById('reg-firstname').value;
-        const lastname = document.getElementById('reg-lastname').value;
-        const email = document.getElementById('reg-email').value;
-        const password = document.getElementById('reg-password').value;
-
-        try {
-          const userRegisterResponse = await fetch('/api/v2/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ firstname, lastname, email, password }),
-          });
-          const parsedResponse = await userRegisterResponse.json();
-          if (parsedResponse.status === 200) {
-            window.location.href = '/login.html';
-          }
-        } catch (error) {
-          console.error('Error:', error);
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", async function(event) {
+      event.preventDefault(); // Prevent form submission
+      console.log("Form submitted");
+  
+      // Get input values
+      const firstName = document.getElementById("firstname").value;
+      const lastName = document.getElementById("lastname").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+  
+      // Request payload
+      const requestBody = { firstName, lastName, email, password };
+  
+      // API endpoint
+      const apiUrl = "http://localhost:3000/api/v2/auth/register";
+  
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        });
+  
+        if (response.ok) {
+          alert("Registration successful!");
+          window.location.href = "login.html";
+        } else {
+          const errorData = await response.json();
+          alert(`Error: ${errorData.message || "Registration failed"}`);
         }
+      } catch (error) {
+        console.error("Error during registration:", error);
+        alert("An error occurred. Please try again.");
       }
-    </script>
-  </body>
+    });
+  </script>
+</body>
 </html>

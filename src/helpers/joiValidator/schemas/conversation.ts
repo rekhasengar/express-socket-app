@@ -8,8 +8,8 @@ import EmptyObject from '@src/types/request/emptyObject';
 export = {
   RegisterRequest: joiValidationRequest<EmptyObject, UserRegisterRequest, EmptyObject, EmptyObject>({
     body: {
-      firstname: Joi.string().required().description(MESSAGE_VALIDATION.FIST_NAME),
-      lastname: Joi.string().required().description(MESSAGE_VALIDATION.LAST_NAME),
+      firstName: Joi.string().required().description(MESSAGE_VALIDATION.FIST_NAME),
+      lastName: Joi.string().required().description(MESSAGE_VALIDATION.LAST_NAME),
       email: Joi.string().required().email().description(MESSAGE_VALIDATION.EMAIL),
       password: Joi.string().required().description(MESSAGE_VALIDATION.PASSWORD),
     },

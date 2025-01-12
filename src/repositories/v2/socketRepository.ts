@@ -10,10 +10,11 @@ export default class SocketRepository {
     this._socketModel = AppDataSource.getRepository(SocketModel);
   }
 
-  public async getSocketIdsByConversationId(conversationId: number): Promise<Array<SocketModel>> {
-    return await this._socketModel.find({
-      where: { conversationKey: conversationId },
-      select: { socketId: true, userKey: true, user: { firstName: true, lastName: true } },
-    });
+  public async insert(socketModel: SocketModel): Promise<void> {
+    await this._socketModel.insert(socketModel);
+  }
+
+  public async remove(socketId: string): Promise<void> {
+    await this._socketModel.delete({ socketId });
   }
 }
