@@ -14,8 +14,8 @@ import { CONTROLLER_LOGS_MESSAGE, LOGS, LOGS_ACTIONS } from '@src/constants';
 export default class AuthService {
   private readonly _userService: UserService;
 
-  constructor(userService: UserService) {
-    this._userService = userService;
+  constructor() {
+    this._userService = new UserService();
   }
 
   public async registerUser(userRegisterDto: UserRegisterDto, context: RequestContext): Promise<AuthResponse> {

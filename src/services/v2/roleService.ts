@@ -1,23 +1,24 @@
-import { ROLE_MESSAGES } from '@src/constants/messages';
-import { RoleModel } from '@src/database/mysql/models/roleModel';
-import { RoleDto } from '@src/dtos/roleDto';
 import RoleRepository from '@src/repositories/v2/roleRepository';
-import { RoleResponse } from '@src/types/response/roleResponse';
+import { RoleResponse, UserRole } from '@src/types/response/roleResponse';
 
 export default class RoleService {
-  private _roleRepository: RoleRepository;
+  private readonly _roleRepository: RoleRepository;
 
-  constructor(roleRepository: RoleRepository) {
-    this._roleRepository = roleRepository;
+  constructor() {
+    this._roleRepository = new RoleRepository();
   }
 
-  public async addRole(roleDto: RoleDto): Promise<RoleResponse> {
-    const roleModel = new RoleModel();
-    roleModel.name = roleDto.name;
-    roleModel.description = roleDto.description;
-    await this._roleRepository.addOrUpdateRoles([roleModel]);
+  public async geRoles(): Promise<RoleResponse> {
+    const userRole = await this._roleRepository.getRoleKeyAndName();
+    const userRoleResponse = new Array<UserRole>();
+    for (const role of userRole) {
+      userRoleResponse.push({
+        key: role.key,
+        name: role.name,
+      });
+    }
     return {
-      message: ROLE_MESSAGES.ROLE_ADDED_SUCCESSFULLY,
+      roles: userRoleResponse,
     };
   }
 }

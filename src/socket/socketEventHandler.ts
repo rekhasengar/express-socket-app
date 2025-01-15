@@ -10,6 +10,7 @@ import {
   EventRequest,
   ReceiveMessageEventRequest,
   SendMessageEventRequest,
+  UserLeaveGroupEventRequest,
 } from '@src/types/request/socketRequest';
 import MessageService from '@service/v2/messageService';
 import SocketConnector from './socketConnector';
@@ -103,7 +104,7 @@ export default class SocketEventHandler {
 
     const conversation = await this._conversationService.getConversationByConversationIdAndUserId(
       conversationId,
-      adminId,
+      [adminId],
       ['members', 'members.role'],
     );
     if (!conversation || !conversation.isGroupChat) {
@@ -132,10 +133,14 @@ export default class SocketEventHandler {
     const conversation = await this._conversationService.getConversationByConversationId(conversationId, [
       'members',
       'members.user',
+      'members.user.sockets',
     ]);
     if (!conversation) {
       throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
     }
+    const conversationMembers = conversation.members.map((conversationMember: ConversationMemberModel): UserModel => {
+      return conversationMember.user;
+    });
     const isUserAlreadyInConversation = conversation.members.find(
       (conversationMember: ConversationMemberModel): boolean => {
         return memberIds.includes(conversationMember.user.id);
@@ -146,7 +151,6 @@ export default class SocketEventHandler {
     }
 
     memberIds.push(adminId);
-    //remove duplicate ids
     const distinctUserIds = Array.from(new Set<string>(memberIds));
     const dbUsers = await this._userService.getAllUserByUserIds(distinctUserIds, ['sockets']);
 
@@ -178,10 +182,27 @@ export default class SocketEventHandler {
       conversationMemberModels.push(conversationMemberModel);
     }
     await this._conversationMemberService.insertConversationMembers(conversationMemberModels);
-    this._emitEventToUsers(dbUsers, adminId, SocketEventEnum.JoinChat, {
+    this._emitEventToUsers(conversationMembers, adminId, SocketEventEnum.JoinChat, {
       adminId,
       conversationId,
       memberIds,
+    });
+  }
+
+  public async leaveGroupEvent(userLeaveGroupEventRequest: UserLeaveGroupEventRequest): Promise<void> {
+    const { adminId, userId, conversationId } = userLeaveGroupEventRequest;
+
+    const conversation = await this._conversationService.getConversationByConversationIdAndUserId(
+      conversationId,
+      userId ? [adminId, userId] : [adminId],
+      ['members', 'members.user', 'members.role'],
+    );
+    if (!conversation) {
+      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
+    }
+
+    const isAdminRoleExits = conversation.members.find((conversationMember: ConversationMemberModel): boolean => {
+      return conversationMember.role.name === RolesEnum.ADMIN;
     });
   }
 
@@ -195,6 +216,7 @@ export default class SocketEventHandler {
       SocketConnector.emitEvent(socket.socketId, eventType, eventRequest);
     }
   }
+
   private _emitEventToUsers(
     users: UserModel[],
     userId: string,

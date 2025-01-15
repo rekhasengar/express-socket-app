@@ -2,7 +2,7 @@ import { ConversationMemberModel } from '@src/database/mysql/models/conversation
 import ConversationMemberRepository from '@src/repositories/v2/conversationMemberRepository';
 
 export default class ConversationMemberService {
-  private _conversationMemberRepository: ConversationMemberRepository;
+  private readonly _conversationMemberRepository: ConversationMemberRepository;
 
   constructor() {
     this._conversationMemberRepository = new ConversationMemberRepository();

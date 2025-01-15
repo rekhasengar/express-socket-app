@@ -10,6 +10,7 @@ import { GetActiveUsersResponse, GetUserStatusResponse, UserStatusResponse } fro
 import ConversationService from './conversationService';
 import UserStatusEnum from '@src/enums/userStatusEnum';
 import { SocketModel } from '@src/database/mysql/models/socketModel';
+import UserDto from '@src/dtos/userDto';
 
 export default class UserService {
   private readonly _userRepository: UserRepository;
@@ -23,7 +24,7 @@ export default class UserService {
   }
 
   public async updateUserByUserId(userId: string): Promise<void> {
-    await this._userRepository.updateUserByUserId({ id: userId }, { isLoginEnabled: false });
+    await this._userRepository.updateUserByUserId(userId);
   }
 
   public async getUserByEmail(email: string): Promise<UserModel | null> {
@@ -37,13 +38,8 @@ export default class UserService {
   public async saveUser(user: UserModel): Promise<UserModel> {
     return await this._userRepository.saveUser(user);
   }
-  public async getAllActiveUserList(context: RequestContext): Promise<GetActiveUsersResponse> {
-    const users = await this._userRepository.getCurrentActiveAllUsers({
-      firstName: true,
-      lastName: true,
-      id: true,
-      deleted: false,
-    });
+  public async getAllActiveUserList(context: RequestContext, userDto: UserDto): Promise<GetActiveUsersResponse> {
+    const users = await this._userRepository.getCurrentActiveAllUsers(userDto.page, userDto.limit);
     if (!users) {
       context.logError({
         message: USER_MESSAGES.ACTIVE_USERS_NOT_FOUND,

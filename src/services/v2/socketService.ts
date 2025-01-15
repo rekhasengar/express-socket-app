@@ -2,7 +2,7 @@ import { SocketModel } from '@src/database/mysql/models/socketModel';
 import SocketRepository from '@src/repositories/v2/socketRepository';
 
 export default class SocketService {
-  private _socketRepository: SocketRepository;
+  private readonly _socketRepository: SocketRepository;
 
   constructor() {
     this._socketRepository = new SocketRepository();

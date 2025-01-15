@@ -129,12 +129,12 @@ export default class ConversationService {
 
   public async getConversationByConversationIdAndUserId(
     conversationId: string,
-    userId: string,
+    userIds: string[],
     relations?: string[],
   ): Promise<ConversationModel | null> {
     return await this._conversationRepository.getConversationByConversationIdAndUserId(
       conversationId,
-      userId,
+      userIds,
       relations,
     );
   }

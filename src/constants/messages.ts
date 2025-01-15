@@ -33,7 +33,8 @@ export const CONVERSATION_MESSAGES = {
   CONVERSATION_MESSAGE_DELETED_SUCCESSFULLY: 'Conversation message deleted successfully.',
   ONE_TO_ONE_CONVERSATION_CREATED_SUCCESSFULLY: 'One to one conversation created successfully.',
   USER_NOT_FOUND_IN_THIS_CONVERSATION: 'You are not in this conversation.',
-  CONVERSATION_NOT_FOUND: 'Conversation not found',
+  CONVERSATION_NOT_FOUND: 'Conversation not found.',
+  CONVERSATION_MESSAGE_NOT_FOUND: 'Conversation message not exists.',
 };
 
 export const CONTROLLER_MESSAGE = {

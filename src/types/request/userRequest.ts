@@ -13,3 +13,8 @@ export type UserLoginRequest = {
 export type UserLogoutPathRequest = {
   userId: string;
 };
+
+export type GetCurrentUsersQueryParamRequest = {
+  page?: number;
+  limit?: number;
+};

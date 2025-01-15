@@ -2,14 +2,15 @@ import { Router } from 'express';
 
 import { API_ROUTE } from '@src/constants';
 import { PathParams, QueryParams, RequestBody, ResponseBody } from '@src/shared/types/customExpressRequest';
-import ConversationContext from '@src/context/conversationContext';
 import { ConversationResponse, GetConversationsResponse } from '@src/types/response/conversationResponse';
 import { CreateConversationRequest, DeleteConversationMessagePathParams } from '@src/types/request/conversationRequest';
 import { checkToken2 } from '@src/middlewares/checkToken';
 import ConversationSchema from '@src/helpers/joiValidator/schemas/conversation';
 import { doValidation } from '@src/helpers/joiValidator';
+import ConversationController from '@src/controllers/v2/conversationController';
 
 const conversationRoute = Router();
+const conversationController = new ConversationController();
 
 conversationRoute.post<
   PathParams,
@@ -17,7 +18,7 @@ conversationRoute.post<
   RequestBody<CreateConversationRequest>,
   QueryParams
 >('/create', checkToken2, doValidation(ConversationSchema.CreateConversationRequest), (...args): void => {
-  ConversationContext.getConversationController.createNewConversation(...args);
+  conversationController.createNewConversation(...args);
 });
 
 conversationRoute.delete<
@@ -29,7 +30,7 @@ conversationRoute.delete<
   '/:conversationId/messages/:messageId',
   doValidation(ConversationSchema.DeleteConversationRequest),
   (...args): void => {
-    ConversationContext.getConversationController.deleteConversationMessage(...args);
+    conversationController.deleteConversationMessage(...args);
   },
 );
 
@@ -37,7 +38,7 @@ conversationRoute.get<PathParams, ResponseBody<GetConversationsResponse>, Reques
   '/',
   checkToken2,
   (...args): void => {
-    ConversationContext.getConversationController.getConversations(...args);
+    conversationController.getConversations(...args);
   },
 );
 

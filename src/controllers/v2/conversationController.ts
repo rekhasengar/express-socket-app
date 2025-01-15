@@ -14,8 +14,8 @@ import EmptyObject from '@src/types/request/emptyObject';
 export default class ConversationController {
   private readonly _conversationService: ConversationService;
 
-  constructor(conversationService: ConversationService) {
-    this._conversationService = conversationService;
+  constructor() {
+    this._conversationService = new ConversationService();
   }
 
   public async createNewConversation(

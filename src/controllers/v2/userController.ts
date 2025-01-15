@@ -8,6 +8,8 @@ import CustomError from '@src/shared/errorHandler/customError';
 import CustomRequest from '@src/shared/types/customExpressRequest';
 import EmptyObject from '@src/types/request/emptyObject';
 import { GetActiveUsersResponse, GetUserStatusResponse } from '@src/types/response/userResponse';
+import { GetCurrentUsersQueryParamRequest } from '@src/types/request/userRequest';
+import UserDto from '@src/dtos/userDto';
 
 export default class UserController {
   private readonly _userService: UserService;
@@ -16,7 +18,7 @@ export default class UserController {
     this._userService = new UserService();
   }
   public async getAllActiveUser(
-    req: CustomRequest<EmptyObject, GetActiveUsersResponse, EmptyObject, EmptyObject>,
+    req: CustomRequest<EmptyObject, GetActiveUsersResponse, EmptyObject, GetCurrentUsersQueryParamRequest>,
     res: Response<ApiResponse<GetActiveUsersResponse>>,
     next: NextFunction,
   ): Promise<void> {
@@ -24,7 +26,8 @@ export default class UserController {
     const { context } = req;
 
     try {
-      const responseFromService = await this._userService.getAllActiveUserList(context);
+      const userDto = new UserDto(req.query);
+      const responseFromService = await this._userService.getAllActiveUserList(context, userDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

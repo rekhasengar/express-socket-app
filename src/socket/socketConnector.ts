@@ -83,26 +83,21 @@ export default class SocketConnector {
         break;
       }
       case SocketEventEnum.AddUserInGroup: {
-        // send event to all user expected adminId only
         socketEventHandler.addUserInGroupEvent(socketRequest.data as AddUsersInGroupEventRequest);
         break;
       }
-      case SocketEventEnum.RemoveUserFromGroup: {
-        //if user self remove ->> send event to all expected self user-id
-        //if admin remove user -->>send event to all expected expected admin-id
-        // socketEventHandler.leaveGroupEvent();
-        break;
-      }
       case SocketEventEnum.RenameGroup: {
-        //do not send this event to admin only
         socketEventHandler.processAdminRenameGroupEvent(socketRequest.data as AdminRenameGroupEventRequest);
         break;
       }
-      case SocketEventEnum.UpdateUserRoleInGroup: {
-        //do not send this event to admin only
-        // socketEventHandler.updateUserRoleInGroupEvent(socketRequest.data as AdminUpdateRole);
-        break;
-      }
+      // case SocketEventEnum.RemoveUserFromGroup: {
+      //   socketEventHandler.leaveGroupEvent(socketRequest.data as UserLeaveGroupEventRequest);
+      //   break;
+      // }
+      // case SocketEventEnum.UpdateUserRoleInGroup: {
+      //   socketEventHandler.updateUserRoleInGroupEvent(socketRequest.data as AdminUpdateRoleEventRequest);
+      //   break;
+      // }
     }
   }
 }

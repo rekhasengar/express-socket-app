@@ -6,6 +6,45 @@
     <title>Whatsapp Chat App</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <style>
+      #messageContainer {
+        max-width: 600px;
+        margin: 20px auto;
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 10px;
+        background: #f9f9f9;
+        height: 400px;
+        overflow-y: auto;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+      }
+      #messageContainer::-webkit-scrollbar {
+        width: 8px;
+      }
+      #messageContainer::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 4px;
+      }
+      .message {
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 70%;
+        word-wrap: break-word;
+      }
+      .message.received {
+        background: #e1f3fb;
+        color: #000;
+        text-align: left;
+      }
+      .message.sent {
+        background: #dcf8c6;
+        color: #000;
+        text-align: right;
+        margin-left: auto;
+      }
+    </style>
   </head>
   <body>
     <h1>Whatsapp Chat App</h1>
@@ -19,7 +58,7 @@
       />
       <button id="sendMessageButton">Send Message</button>
     </div>
-    <div id="messageContainer" style="margin-top: 20px"></div>
+    <div id="messageContainer"></div>
 
     <script>
       // Retrieve the token from localStorage
@@ -68,15 +107,39 @@
         // Listen for a message from the server
         socket.on('receiveMessage', (data) => {
           console.log('Received message from backend:', data.message.message);
+          displayMessage(data.message.message, 'received');
         });
 
-        socket.on('userStatus',(data) => {
-          console.log('Received message from backend:', data.message.message);
-        })
+        socket.on('userStatus', (data) => {
+          console.log('Received status update:', data.message.message);
+          displayMessage(data.message.message, 'received');
+        });
 
-        socket.on('addUserInGroup',(data) => {
-          console.log('Received message from backend:', data.message.message);
-        })
+        socket.on('joinChat', (data) => {
+          console.log('Received group update:', data.message.message);
+          displayMessage(data.message.message, 'received');
+        });
+
+        socket.on('renameGroup', (data) => {
+          console.log('Received group update:', data.message.message);
+          displayMessage(data.message.message, 'received');
+        });
+
+        function displayMessage(messageText, type) {
+          const messageContainer = document.getElementById('messageContainer');
+          const messageWrapper = document.createElement('div');
+          const messageElement = document.createElement('div');
+
+          // Apply styles for received/sent messages
+          messageElement.classList.add('message', type);
+
+          messageElement.textContent = messageText;
+          messageWrapper.appendChild(messageElement);
+          messageContainer.appendChild(messageWrapper);
+
+          // Scroll to the bottom of the container
+          messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
 
         // Send a message to the server
         document.getElementById('sendMessageButton').addEventListener('click', () => {
@@ -91,27 +154,21 @@
           const decodedToken = jwt_decode(token);
           const userId = decodedToken.id;
           const payload = {
-            // eventType: 'sendMessage',
-            // socketId: socket.id, // Use the current socket ID
-            // data: {
-            //   conversationId: 'f6d7bc9e-4bcc-4cab-acac-f0e1bf97c67e',
-            //   senderId: userId,
-            //   message: {
-            //     id: uuid,
-            //     message: messageText,
-            //     timestamp: new Date().getTime(),
-            //   },
-            // },
-            eventType: 'addUserInGroup',
+            eventType: 'sendMessage',
             socketId: socket.id,
             data: {
-              adminId: userId,
-              conversationId: '6e361355-dfba-411d-844c-6a7a2711b616',
-              memberIds: ['f0707f39-ca27-43f9-af08-a8c14f151e72']
-          }
+              conversationId: '7e989195-3742-4f39-adf5-56b5508b4a18',
+              senderId: userId,
+              message: {
+                id: uuid,
+                message: messageText,
+                timestamp: new Date().getTime(),
+              },
+            },
           };
 
           socket.emit('event', payload);
+          displayMessage(messageText, 'sent'); // Display the message immediately
           console.log('Message sent successfully!');
           messageInput.value = ''; // Clear the input after sending the message
         });

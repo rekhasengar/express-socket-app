@@ -14,8 +14,8 @@ import EmptyObject from '@src/types/request/emptyObject';
 export default class AuthController {
   private readonly _authService: AuthService;
 
-  constructor(authService: AuthService) {
-    this._authService = authService;
+  constructor() {
+    this._authService = new AuthService();
   }
 
   public async registerUser(

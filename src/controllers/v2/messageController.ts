@@ -5,25 +5,28 @@ import { CONTROLLER_MESSAGE } from '@src/constants/messages';
 import { ApiResponse } from '@src/shared/errorHandler/apiResponse';
 import CustomError from '@src/shared/errorHandler/customError';
 import CustomRequest from '@src/shared/types/customExpressRequest';
-import { RoleResponse } from '@src/types/response/roleResponse';
-import RoleService from '@service/v2/roleService';
 import EmptyObject from '@src/types/request/emptyObject';
+import MessageService from '@service/v2/messageService';
+import { MessagePathRequest, MessageQueryRequest } from '@src/types/request/messageRequest';
+import { MessageResponse } from '@src/types/response/messageResponse';
+import MessageDto from '@src/dtos/messageDto';
 
-export default class RoleController {
-  private readonly _roleService: RoleService;
+export default class MessageController {
+  private readonly _messageService: MessageService;
 
   constructor() {
-    this._roleService = new RoleService();
+    this._messageService = new MessageService();
   }
 
-  public async geRoles(
-    req: CustomRequest<EmptyObject, RoleResponse, EmptyObject, EmptyObject>,
-    res: Response<ApiResponse<RoleResponse>>,
+  public async getMessage(
+    req: CustomRequest<MessagePathRequest, MessageResponse, EmptyObject, MessageQueryRequest>,
+    res: Response<ApiResponse<MessageResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<RoleResponse>();
+    const response = new ApiResponse<MessageResponse>();
     try {
-      const responseFromService = await this._roleService.geRoles();
+      const messageDto = new MessageDto(req.params, req.query);
+      const responseFromService = await this._messageService.getMessagesByConversationId(messageDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

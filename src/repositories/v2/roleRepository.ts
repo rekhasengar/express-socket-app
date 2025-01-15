@@ -13,4 +13,13 @@ export default class RoleRepository {
   public async addOrUpdateRoles(roleModels: RoleModel[]): Promise<void> {
     await this._roleModel.save(roleModels);
   }
+
+  public async getRoleKeyAndName(): Promise<RoleModel[]> {
+    return await this._roleModel.find({
+      select: {
+        key: true,
+        name: true,
+      },
+    });
+  }
 }

@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { AppDataSource } from '@src/database/mysql/typeormConfig';
 import { ConversationModel } from '@src/database/mysql/models/conversationModel';
@@ -35,7 +35,7 @@ export default class ConversationRepository {
 
   public async getConversationByConversationIdAndUserId(
     conversationId: string,
-    userId: string,
+    userIds: string[],
     relations?: string[],
   ): Promise<ConversationModel | null> {
     return await this._conversationModel.findOne({
@@ -43,7 +43,7 @@ export default class ConversationRepository {
         id: conversationId,
         members: {
           user: {
-            id: userId,
+            id: In([userIds]),
           },
         },
       },

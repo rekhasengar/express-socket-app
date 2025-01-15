@@ -1,4 +1,4 @@
-import { FindOptionsSelect, FindOptionsWhere, In, Repository } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 
 import { UserModel } from '@src/database/mysql/models/userModel';
 import { AppDataSource } from '@src/database/mysql/typeormConfig';
@@ -10,12 +10,19 @@ export default class UserRepository {
     this._userModel = AppDataSource.getRepository(UserModel);
   }
 
-  public async getCurrentActiveAllUsers(select: FindOptionsSelect<UserModel>): Promise<Array<UserModel>> {
-    return await this._userModel.find({ select });
-  }
+  public async getCurrentActiveAllUsers(page: number, limit: number): Promise<Array<UserModel>> {
+    const skip = (page - 1) * limit;
 
-  public async getUser(where: FindOptionsWhere<UserModel>): Promise<UserModel | null> {
-    return await this._userModel.findOne({ where });
+    return await this._userModel.find({
+      select: {
+        firstName: true,
+        lastName: true,
+        id: true,
+        deleted: false,
+      },
+      skip,
+      take: limit,
+    });
   }
 
   public async getUserByUserId(userId: string, relations?: string[]): Promise<UserModel | null> {
@@ -25,8 +32,8 @@ export default class UserRepository {
     });
   }
 
-  public async updateUserByUserId(where: FindOptionsWhere<UserModel>, data: Partial<UserModel>): Promise<void> {
-    await this._userModel.update(where, data);
+  public async updateUserByUserId(userId: string): Promise<void> {
+    await this._userModel.update({ id: userId }, { isLoginEnabled: false });
   }
 
   public async getAllUserByUserIds(userIds: Array<string>, relations?: string[]): Promise<Array<UserModel>> {

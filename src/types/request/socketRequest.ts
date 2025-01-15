@@ -12,8 +12,6 @@ export type EventRequest =
   | DeleteMessageSenderEventRequest
   | DeleteMessageReceiverEventRequest
   | UserStatusEventRequest
-  | RemoveUserFromGroupEventRequest
-  | UserRemovedFromGroupEventRequest
   | AddUsersInGroupEventRequest
   | UsersAddedInGroupEventRequest
   | UserLeaveGroupEventRequest
@@ -57,18 +55,18 @@ export type UserStatusEventRequest = {
   status: UserStatusEnum;
 };
 
-//client will send to server.
-export type RemoveUserFromGroupEventRequest = {
-  adminId: string;
-  userId?: string;
-  conversationId: string;
-};
-//server will send to client.
-export type UserRemovedFromGroupEventRequest = {
-  adminId: string;
-  userId: string;
-  conversationId: string;
-};
+// //client will send to server.
+// export type RemoveUserFromGroupEventRequest = {
+//   adminId: string;
+//   userId?: string;
+//   conversationId: string;
+// };
+// //server will send to client.
+// export type UserRemovedFromGroupEventRequest = {
+//   adminId: string;
+//   userId?: string;
+//   conversationId: string;
+// };
 
 //client will send to server.
 export type AddUsersInGroupEventRequest = {
@@ -86,12 +84,14 @@ export type UsersAddedInGroupEventRequest = {
 //client will send to server.
 export type UserLeaveGroupEventRequest = {
   conversationId: string;
-  userId: string;
+  adminId: string;
+  userId?: string;
 };
 //Server will send to client.
 export type UserLeftGroupEventRequest = {
   conversationId: string;
   userId: string; //who left group.
+  adminId?: string; //if admin remove user so we need to send adminId
 };
 
 export type AdminUpdateRoleEventRequest = {
