@@ -7,22 +7,21 @@ enum SocketEventEnum {
   // Message-related events
   SendMessage = 'sendMessage',
   ReceiveMessage = 'receiveMessage',
-  DeleteMessage = 'deleteMessage',
 
   //User activity related events
-  ActiveUser = 'activeUser',
-  InactiveUser = 'inactiveUser',
+  UserStatus = 'userStatus',
 
   //Conversation related event
   RemoveUserFromGroup = 'removeUserFromGroup',
-  AddUserInGroup = 'addUserInGroup',
   LeaveGroup = 'leaveGroup',
-  UpdateGroupUserRole = 'updateGroupUserRole',
 
-  // Chat and group events - pending.
-  JoinChat = 'joinChat',
   RenameGroup = 'renameGroup',
-  NewConversationCreate = 'newConversationCreate',
+
+  UpdateUserRoleInGroup = 'updateUserRoleInGroup',
+
+  // Chat and group events
+  AddUserInGroup = 'addUserInGroup',
+  JoinChat = 'joinChat',
 }
 
 export default SocketEventEnum;

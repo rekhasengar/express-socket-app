@@ -4,6 +4,7 @@ export const API_ROUTE = {
   AUTH: '/api/v2/auth',
   CONVERSATIONS: '/api/v2/conversations',
   ROLES: '/api/v2/roles',
+  USERS: '/api/v2/users',
 };
 
 export default {

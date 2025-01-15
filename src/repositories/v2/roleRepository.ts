@@ -13,8 +13,4 @@ export default class RoleRepository {
   public async addOrUpdateRoles(roleModels: RoleModel[]): Promise<void> {
     await this._roleModel.save(roleModels);
   }
-
-  public async getAllRoleList(): Promise<Array<RoleModel>> {
-    return await this._roleModel.find();
-  }
 }

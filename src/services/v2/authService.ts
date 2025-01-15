@@ -67,7 +67,7 @@ export default class AuthService {
     }
     user.isLoginEnabled = true;
     const savedUser = await this._userService.saveUser(user);
-    const token = generateJWT({ id: savedUser.id });
+    const token = generateJWT({ id: savedUser.id, email: savedUser.email });
     context.logInfo({
       message: CONTROLLER_LOGS_MESSAGE.LOGOUT_PROCESS_COMPLETED,
       source: LOGS.SUCCESS_MESSAGE(AuthService.name, this.userLogin.name),

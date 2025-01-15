@@ -20,8 +20,4 @@ export default class RoleService {
       message: ROLE_MESSAGES.ROLE_ADDED_SUCCESSFULLY,
     };
   }
-
-  public async getAllRoleList(): Promise<Array<RoleModel>> {
-    return await this._roleRepository.getAllRoleList();
-  }
 }

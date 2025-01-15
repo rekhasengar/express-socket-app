@@ -3,11 +3,7 @@ import { Router } from 'express';
 import { API_ROUTE } from '@src/constants';
 import { PathParams, QueryParams, RequestBody, ResponseBody } from '@src/shared/types/customExpressRequest';
 import ConversationContext from '@src/context/conversationContext';
-import {
-  ConversationResponse,
-  GetActiveUsersResponse,
-  GetConversationsResponse,
-} from '@src/types/response/conversationResponse';
+import { ConversationResponse, GetConversationsResponse } from '@src/types/response/conversationResponse';
 import { CreateConversationRequest, DeleteConversationMessagePathParams } from '@src/types/request/conversationRequest';
 import { checkToken2 } from '@src/middlewares/checkToken';
 import ConversationSchema from '@src/helpers/joiValidator/schemas/conversation';
@@ -15,19 +11,12 @@ import { doValidation } from '@src/helpers/joiValidator';
 
 const conversationRoute = Router();
 
-conversationRoute.get<PathParams, ResponseBody<GetActiveUsersResponse>, RequestBody, QueryParams>(
-  '/current-users',
-  (...args): void => {
-    ConversationContext.getConversationController.getAllActiveUser(...args);
-  },
-);
-
 conversationRoute.post<
   PathParams,
   ResponseBody<ConversationResponse>,
   RequestBody<CreateConversationRequest>,
   QueryParams
->('/', doValidation(ConversationSchema.CreateConversationRequest), (...args): void => {
+>('/create', checkToken2, doValidation(ConversationSchema.CreateConversationRequest), (...args): void => {
   ConversationContext.getConversationController.createNewConversation(...args);
 });
 

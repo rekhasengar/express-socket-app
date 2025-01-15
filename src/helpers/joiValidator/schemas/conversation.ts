@@ -13,7 +13,7 @@ export = {
         .min(1) // At least one userId must be provided
         .required()
         .description(MESSAGE_VALIDATION.USER_ID),
-      groupName: Joi.string().required().description(MESSAGE_VALIDATION.GROUP_NAME),
+      groupName: Joi.string().optional().description(MESSAGE_VALIDATION.GROUP_NAME),
     },
   }),
 

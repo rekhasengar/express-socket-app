@@ -11,27 +11,4 @@ export default class ConversationMemberService {
   public async insertConversationMembers(conversationMemberModels: ConversationMemberModel[]): Promise<void> {
     await this._conversationMemberRepository.insertConversationMembers(conversationMemberModels);
   }
-
-  public async addUserInConversationMember(data: ConversationMemberModel): Promise<void> {
-    await this._conversationMemberRepository.addUserInConversationMember(data);
-  }
-
-  public async addUsersInConversationMember(data: Array<ConversationMemberModel>): Promise<void> {
-    await this._conversationMemberRepository.addUsersInConversationMember(data);
-  }
-
-  public async getConversationMemberDetailById(userId: number): Promise<ConversationMemberModel | null> {
-    return await this._conversationMemberRepository.getConversationMemberDetailById(userId);
-  }
-
-  public async getAdminIdFromSingleConversation(
-    conversationId: number,
-    roleId: number,
-  ): Promise<Array<ConversationMemberModel>> {
-    return await this._conversationMemberRepository.getAdminIdFromSingleConversation(conversationId, roleId);
-  }
-
-  public async deleteSingleConversation(conversationId: number): Promise<void> {
-    await this._conversationMemberRepository.deleteSingleConversation({ key: conversationId });
-  }
 }

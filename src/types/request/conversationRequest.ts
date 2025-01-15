@@ -1,6 +1,6 @@
 export type CreateConversationRequest = {
   userId: Array<string>;
-  groupName: string;
+  groupName?: string;
 };
 
 export type DeleteSingleConversationRequest = {

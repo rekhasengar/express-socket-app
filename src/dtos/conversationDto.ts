@@ -2,13 +2,13 @@ import { CreateConversationRequest, DeleteConversationMessagePathParams } from '
 
 export class CreateConversationDto {
   adminId: string;
-  groupName: string;
+  groupName?: string;
   usersId: Array<string>;
 
   constructor(body: CreateConversationRequest, adminId: string) {
     this.adminId = adminId;
     this.usersId = body.userId;
-    this.groupName = body.groupName || 'group chat';
+    this.groupName = body.groupName;
   }
 }
 

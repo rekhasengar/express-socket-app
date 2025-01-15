@@ -3,11 +3,7 @@ import HttpStatusCode from 'http-status-codes';
 
 import { ApiResponse } from '@src/shared/errorHandler/apiResponse';
 import CustomRequest from '@src/shared/types/customExpressRequest';
-import {
-  ConversationResponse,
-  GetActiveUsersResponse,
-  GetConversationsResponse,
-} from '@src/types/response/conversationResponse';
+import { ConversationResponse, GetConversationsResponse } from '@src/types/response/conversationResponse';
 import { CONTROLLER_MESSAGE } from '@src/constants/messages';
 import CustomError from '@src/shared/errorHandler/customError';
 import ConversationService from '@service/v2/conversationService';
@@ -22,37 +18,16 @@ export default class ConversationController {
     this._conversationService = conversationService;
   }
 
-  public async getAllActiveUser(
-    req: CustomRequest<EmptyObject, GetActiveUsersResponse, EmptyObject, EmptyObject>,
-    res: Response<ApiResponse<GetActiveUsersResponse>>,
-    next: NextFunction,
-  ): Promise<void> {
-    const response = new ApiResponse<GetActiveUsersResponse>();
-    const { context } = req;
-
-    try {
-      const responseFromService = await this._conversationService.getAllActiveUserList(context);
-      response.status = HttpStatusCode.OK;
-      response.message = CONTROLLER_MESSAGE.SUCCESS;
-      response.body = responseFromService;
-      res.status(response.status).send(response);
-    } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
-      return next(customError);
-    }
-  }
-
   public async createNewConversation(
     req: CustomRequest<EmptyObject, ConversationResponse, CreateConversationRequest, EmptyObject>,
     res: Response<ApiResponse<ConversationResponse>>,
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<ConversationResponse>();
-    const { adminId } = req.app.locals.userId;
     const { context } = req;
 
     try {
-      const createConversationDto = new CreateConversationDto(req.body, adminId);
+      const createConversationDto = new CreateConversationDto(req.body, req.app.locals.userId);
       const responseFromService = await this._conversationService.createNewConversation(createConversationDto, context);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;

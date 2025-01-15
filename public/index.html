@@ -5,10 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Whatsapp Chat App</title>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
   </head>
   <body>
     <h1>Whatsapp Chat App</h1>
-    <button id="sendMessageButton">Send Message</button>
+    <p id="userEmail" style="font-weight: bold; color: #555"></p>
+    <div>
+      <input
+        type="text"
+        id="messageInput"
+        placeholder="Type your message here"
+        style="width: 300px; padding: 10px; margin-right: 10px"
+      />
+      <button id="sendMessageButton">Send Message</button>
+    </div>
+    <div id="messageContainer" style="margin-top: 20px"></div>
 
     <script>
       // Retrieve the token from localStorage
@@ -18,6 +29,23 @@
         alert('You are not authenticated. Redirecting to login page.');
         window.location.href = '/login.html';
       } else {
+        try {
+          // Decode the token to extract user details
+          const decodedToken = jwt_decode(token);
+          const userEmail = decodedToken.email; // Assumes token has an 'email' field
+          const emailDisplay = document.getElementById('userEmail');
+
+          if (userEmail) {
+            emailDisplay.textContent = `Logged in as: ${userEmail}`;
+          } else {
+            emailDisplay.textContent = 'Email not found in token.';
+          }
+        } catch (error) {
+          console.error('Error decoding token:', error);
+          alert('Invalid token. Redirecting to login page.');
+          window.location.href = '/login.html';
+        }
+
         // Connect to the backend using the token
         const socket = io('http://localhost:3000', {
           auth: {
@@ -25,32 +53,67 @@
           },
         });
 
-        // Listen for a message from the server
-        socket.on('message', (data) => {
-          console.log('Received message from backend:', data);
+        socket.on('connected', () => {
+          console.log('Connected successfully!');
         });
 
-        socket.on('connected',() => {
-          console.log("Connected successfully!")
+        // Handle user going offline (tab or window close)
+        window.addEventListener('beforeunload', () => {
+          if (socket && socket.connected) {
+            socket.emit('inactiveUser', { socketId: socket.id });
+            console.log('User inactive event sent to the server:', { socketId: socket.id });
+          }
+        });
+
+        // Listen for a message from the server
+        socket.on('receiveMessage', (data) => {
+          console.log('Received message from backend:', data.message.message);
+        });
+
+        socket.on('userStatus',(data) => {
+          console.log('Received message from backend:', data.message.message);
+        })
+
+        socket.on('addUserInGroup',(data) => {
+          console.log('Received message from backend:', data.message.message);
         })
 
         // Send a message to the server
         document.getElementById('sendMessageButton').addEventListener('click', () => {
+          const messageInput = document.getElementById('messageInput');
+          const messageText = messageInput.value.trim();
+          if (messageText === '') {
+            alert('Message cannot be empty!');
+            return;
+          }
+
+          const uuid = crypto.randomUUID();
+          const decodedToken = jwt_decode(token);
+          const userId = decodedToken.id;
           const payload = {
-            eventType: 'adminAddUserInGroup',
-            socketId: socket.id, // Use the current socket ID
+            // eventType: 'sendMessage',
+            // socketId: socket.id, // Use the current socket ID
+            // data: {
+            //   conversationId: 'f6d7bc9e-4bcc-4cab-acac-f0e1bf97c67e',
+            //   senderId: userId,
+            //   message: {
+            //     id: uuid,
+            //     message: messageText,
+            //     timestamp: new Date().getTime(),
+            //   },
+            // },
+            eventType: 'addUserInGroup',
+            socketId: socket.id,
             data: {
-              conversationId: '693a52c9-dd5c-4028-9197-8fc8f8d0143b',
-              userId: '81b62a92-c55c-4a4b-aac5-de544f905195',
-              message: {
-                id: '81b62a92-c55c-4a4b-aac5-de544f905195',
-                message: 'Hello, How are you',
-                timestamp: new Date().getTime(),
-              },
-            },
+              adminId: userId,
+              conversationId: '6e361355-dfba-411d-844c-6a7a2711b616',
+              memberIds: ['f0707f39-ca27-43f9-af08-a8c14f151e72']
+          }
           };
 
           socket.emit('event', payload);
+          console.log('Message sent successfully!');
+          messageInput.value = ''; // Clear the input after sending the message
         });
       }
     </script>

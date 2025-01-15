@@ -10,11 +10,8 @@ export default class UserRepository {
     this._userModel = AppDataSource.getRepository(UserModel);
   }
 
-  public async getCurrentActiveAllUsers(
-    where: FindOptionsWhere<UserModel>,
-    select: FindOptionsSelect<UserModel>,
-  ): Promise<Array<UserModel>> {
-    return await this._userModel.find({ where, select });
+  public async getCurrentActiveAllUsers(select: FindOptionsSelect<UserModel>): Promise<Array<UserModel>> {
+    return await this._userModel.find({ select });
   }
 
   public async getUser(where: FindOptionsWhere<UserModel>): Promise<UserModel | null> {
@@ -32,15 +29,12 @@ export default class UserRepository {
     await this._userModel.update(where, data);
   }
 
-  public async getAllUserById(userIds: Array<string>): Promise<Array<UserModel>> {
+  public async getAllUserByUserIds(userIds: Array<string>, relations?: string[]): Promise<Array<UserModel>> {
     return await this._userModel.find({
       where: {
         id: In(userIds),
       },
-      select: {
-        key: true,
-        id: true,
-      },
+      relations,
     });
   }
 
@@ -81,6 +75,9 @@ export default class UserRepository {
                 id: true,
                 firstName: true,
                 lastName: true,
+                sockets: {
+                  socketId: true,
+                },
               },
             },
           },
@@ -93,7 +90,42 @@ export default class UserRepository {
         'conversationMembers.conversation.members',
         'conversationMembers.conversation.members.role',
         'conversationMembers.conversation.members.user',
+        'conversationMembers.conversation.members.user.sockets',
       ],
+    });
+  }
+
+  public async getUserIdBySocketId(socketId: string, relations?: string[]): Promise<UserModel | null> {
+    return await this._userModel.findOne({
+      where: {
+        sockets: {
+          socketId: socketId,
+        },
+      },
+      relations,
+    });
+  }
+
+  public async getUsersByConversationIds(
+    conversationIds: Array<string>,
+    relations?: string[],
+  ): Promise<Array<UserModel>> {
+    return await this._userModel.find({
+      where: {
+        conversationMembers: {
+          conversation: {
+            id: In([conversationIds]),
+          },
+        },
+      },
+      relations,
+    });
+  }
+
+  public async getAllUsers(relations?: string[]): Promise<Array<UserModel>> {
+    return await this._userModel.find({
+      where: {},
+      relations,
     });
   }
 }

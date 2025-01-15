@@ -10,11 +10,44 @@ export default class ConversationRepository {
     this._conversationModel = AppDataSource.getRepository(ConversationModel);
   }
 
-  public async getByConversationId(conversationId: string, relations?: string[]): Promise<ConversationModel | null> {
+  public async getConversationByConversationId(
+    conversationId: string,
+    relations?: string[],
+  ): Promise<ConversationModel | null> {
     return await this._conversationModel.findOne({ where: { id: conversationId }, relations });
   }
 
   public async saveConversation(conversationModel: ConversationModel): Promise<ConversationModel> {
     return await this._conversationModel.save(conversationModel);
+  }
+
+  public async updateByConversationId(
+    conversationId: string,
+    conversationModel: Partial<ConversationModel>,
+  ): Promise<void> {
+    await this._conversationModel.update(
+      {
+        id: conversationId,
+      },
+      conversationModel,
+    );
+  }
+
+  public async getConversationByConversationIdAndUserId(
+    conversationId: string,
+    userId: string,
+    relations?: string[],
+  ): Promise<ConversationModel | null> {
+    return await this._conversationModel.findOne({
+      where: {
+        id: conversationId,
+        members: {
+          user: {
+            id: userId,
+          },
+        },
+      },
+      relations,
+    });
   }
 }
