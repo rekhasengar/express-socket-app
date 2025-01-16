@@ -1,12 +1,15 @@
 import HttpStatusCode from 'http-status-codes';
 
-import { LOGS, LOGS_ACTIONS, USER_CHAT_TYPE } from '@src/constants';
+import { LOGS, USER_CHAT_TYPE } from '@src/constants';
 import UserService from './userService';
 import { ConversationResponse, GetConversationsResponse } from '@src/types/response/conversationResponse';
-import CustomError from '@src/shared/errorHandler/customError';
 import ConversationRepository from '@src/repositories/v2/conversationRepository';
 import { ConversationModel } from '@src/database/mysql/models/conversationModel';
-import { CreateConversationDto, DeleteConversationMessageDto } from '@src/dtos/conversationDto';
+import {
+  CreateConversationDto,
+  DeleteConversationMessageDto,
+  GetConversationMessageDto,
+} from '@src/dtos/conversationDto';
 import ConversationMemberService from './conversationMemberService';
 import { ConversationMemberModel } from '@src/database/mysql/models/conversationMemberModel';
 import MessageService from './messageService';
@@ -15,6 +18,8 @@ import { getRoleKeyByName } from '@src/seeders/roleSeeder';
 import RolesEnum from '@src/enums/rolesEnum';
 import { CONVERSATION_MESSAGES, USER_MESSAGES } from '@src/constants/messages';
 import RequestContext from '@src/helpers/context';
+import { getMessage } from '@src/config/messages';
+import { CustomErrorHandler } from '@src/helpers/customErrorHandler';
 
 export default class ConversationService {
   private readonly _userService: UserService;
@@ -36,27 +41,33 @@ export default class ConversationService {
     return this._conversationRepository.getConversationByConversationId(conversationId, relations);
   }
 
-  public async createNewConversation(
-    createConversationDto: CreateConversationDto,
-    context: RequestContext,
-  ): Promise<ConversationResponse> {
-    if (!createConversationDto.usersId.length) {
+  public async createNewConversation(createConversationDto: CreateConversationDto): Promise<ConversationResponse> {
+    const { context, adminId, userIds, groupName, locale } = createConversationDto;
+
+    if (!userIds.length) {
       context.logError({
-        message: USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION,
+        message: getMessage(USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION),
         source: LOGS.ERROR_MESSAGE(ConversationService.name, this.createNewConversation.name),
-        action: LOGS_ACTIONS.CONVERSATION,
+        action: USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION,
       });
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION);
+      const message = getMessage(USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION, locale);
+      throw new CustomErrorHandler(
+        HttpStatusCode.BAD_REQUEST,
+        message,
+        USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION,
+      );
     }
-    if (createConversationDto.usersId.length === 1 && !createConversationDto.groupName) {
-      await this._createOneToOneConversation(createConversationDto, context);
+
+    if (userIds.length === 1 && !groupName) {
+      await this._createOneToOneConversation(adminId, userIds, context, locale);
     } else {
-      await this._createGroupConversation(createConversationDto, context);
+      await this._createGroupConversation(adminId, userIds, groupName, context, locale);
     }
+
     context.logInfo({
       message: CONVERSATION_MESSAGES.CONVERSATION_CREATED_SUCCESSFULLY,
       source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this.createNewConversation.name),
-      action: LOGS_ACTIONS.CONVERSATION,
+      action: CONVERSATION_MESSAGES.CONVERSATION_CREATED_SUCCESSFULLY,
     });
     return {
       message: CONVERSATION_MESSAGES.CONVERSATION_CREATED_SUCCESSFULLY,
@@ -65,31 +76,34 @@ export default class ConversationService {
 
   public async deleteConversationMessage(
     deleteConversationDto: DeleteConversationMessageDto,
-    context: RequestContext,
   ): Promise<ConversationResponse> {
-    await this._messageService.deleteSingleMessage(
-      deleteConversationDto.userId,
-      deleteConversationDto.messageId,
-      deleteConversationDto.conversationId,
-    );
+    const { userId, messageId, conversationId, context } = deleteConversationDto;
+    await this._messageService.deleteSingleMessage(userId, messageId, conversationId);
+
     context.logInfo({
       message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_DELETED_SUCCESSFULLY,
       source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this.createNewConversation.name),
-      action: LOGS_ACTIONS.CONVERSATION,
+      action: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_DELETED_SUCCESSFULLY,
     });
+
     return {
       message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_DELETED_SUCCESSFULLY,
     };
   }
-  public async getConversations(userId: string, context: RequestContext): Promise<GetConversationsResponse> {
+  public async getConversations(
+    getConversationMessageDto: GetConversationMessageDto,
+  ): Promise<GetConversationsResponse> {
+    const { userId, context, locale } = getConversationMessageDto;
+
     const user = await this._userService.getUserConversationsForGetConversationApi(userId);
     if (!user) {
       context.logError({
-        message: USER_MESSAGES.USER_NOT_FOUND,
+        message: getMessage(USER_MESSAGES.USER_NOT_FOUND),
         source: LOGS.ERROR_MESSAGE(ConversationService.name, this.createNewConversation.name),
-        action: LOGS_ACTIONS.CONVERSATION,
+        action: USER_MESSAGES.USER_NOT_FOUND,
       });
-      throw new CustomError(HttpStatusCode.NOT_FOUND, USER_MESSAGES.USER_NOT_FOUND);
+      const message = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
+      throw new CustomErrorHandler(HttpStatusCode.NOT_FOUND, message, USER_MESSAGES.USER_NOT_FOUND);
     }
 
     const conversations = user.conversationMembers.map(
@@ -111,11 +125,13 @@ export default class ConversationService {
         return conversation;
       },
     );
+
     context.logInfo({
       message: CONVERSATION_MESSAGES.CONVERSATION_CREATED_SUCCESSFULLY,
       source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this.getConversations.name),
-      action: LOGS_ACTIONS.CONVERSATION,
+      action: CONVERSATION_MESSAGES.CONVERSATION_CREATED_SUCCESSFULLY,
     });
+
     return {
       conversations: conversations,
     };
@@ -127,12 +143,12 @@ export default class ConversationService {
     });
   }
 
-  public async getConversationByConversationIdAndUserId(
+  public async getConversationByConversationIdAndUserIds(
     conversationId: string,
     userIds: string[],
     relations?: string[],
   ): Promise<ConversationModel | null> {
-    return await this._conversationRepository.getConversationByConversationIdAndUserId(
+    return await this._conversationRepository.getConversationByConversationIdAndUserIds(
       conversationId,
       userIds,
       relations,
@@ -140,14 +156,14 @@ export default class ConversationService {
   }
 
   private async _createOneToOneConversation(
-    createConversationDto: CreateConversationDto,
+    adminId: string,
+    userIds: string[],
     context: RequestContext,
+    locale: string,
   ): Promise<void> {
-    const { usersId } = createConversationDto;
-    let { adminId } = createConversationDto;
-    usersId.push(adminId);
+    userIds.push(adminId);
 
-    const distinctUserIds = Array.from(new Set<string>(usersId));
+    const distinctUserIds = Array.from(new Set<string>(userIds));
     const dbUsers = await this._userService.getAllUserByUserIds(distinctUserIds);
 
     adminId = adminId.trim().toLowerCase();
@@ -162,16 +178,27 @@ export default class ConversationService {
     });
 
     if (!admin) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.ADMIN_NOT_FOUND);
+      context.logError({
+        message: getMessage(USER_MESSAGES.ADMIN_NOT_FOUND),
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createOneToOneConversation.name),
+        action: USER_MESSAGES.ADMIN_NOT_FOUND,
+      });
+      const message = getMessage(USER_MESSAGES.ADMIN_NOT_FOUND, locale);
+      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.ADMIN_NOT_FOUND);
     }
     if (!users) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.USER_NOT_FOUND);
+      context.logError({
+        message: getMessage(USER_MESSAGES.USER_NOT_FOUND),
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createOneToOneConversation.name),
+        action: USER_MESSAGES.USER_NOT_FOUND,
+      });
+      const message = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
+      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.USER_NOT_FOUND);
     }
 
     const conversationModel = new ConversationModel();
     conversationModel.name = USER_CHAT_TYPE.ONE_TO_ONE_CHAT;
     conversationModel.isGroupChat = false;
-
     const dbConversation = await this._conversationRepository.saveConversation(conversationModel);
 
     users.push(admin);
@@ -189,19 +216,20 @@ export default class ConversationService {
     context.logInfo({
       message: CONVERSATION_MESSAGES.ONE_TO_ONE_CONVERSATION_CREATED_SUCCESSFULLY,
       source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this._createOneToOneConversation.name),
-      action: LOGS_ACTIONS.CONVERSATION,
+      action: CONVERSATION_MESSAGES.ONE_TO_ONE_CONVERSATION_CREATED_SUCCESSFULLY,
     });
   }
 
   private async _createGroupConversation(
-    createConversationDto: CreateConversationDto,
+    adminId: string,
+    userIds: string[],
+    groupName: string | undefined,
     context: RequestContext,
+    locale: string,
   ): Promise<void> {
-    const { usersId, groupName } = createConversationDto;
-    let { adminId } = createConversationDto;
-    usersId.push(adminId);
+    userIds.push(adminId);
 
-    const distinctUserIds = Array.from(new Set<string>(usersId));
+    const distinctUserIds = Array.from(new Set<string>(userIds));
     const dbUsers = await this._userService.getAllUserByUserIds(distinctUserIds);
 
     adminId = adminId.trim().toLowerCase();
@@ -216,16 +244,27 @@ export default class ConversationService {
     });
 
     if (!admin) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.ADMIN_NOT_FOUND);
+      context.logError({
+        message: getMessage(USER_MESSAGES.ADMIN_NOT_FOUND),
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createGroupConversation.name),
+        action: USER_MESSAGES.ADMIN_NOT_FOUND,
+      });
+      const message = getMessage(USER_MESSAGES.ADMIN_NOT_FOUND, locale);
+      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.ADMIN_NOT_FOUND);
     }
     if (!users) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.USER_NOT_FOUND);
+      context.logError({
+        message: getMessage(USER_MESSAGES.USER_NOT_FOUND),
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createGroupConversation.name),
+        action: USER_MESSAGES.USER_NOT_FOUND,
+      });
+      const message = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
+      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.USER_NOT_FOUND);
     }
 
     const conversationModel = new ConversationModel();
     conversationModel.name = groupName || 'group chat';
     conversationModel.isGroupChat = true;
-
     const dbConversation = await this._conversationRepository.saveConversation(conversationModel);
 
     users.push(admin);
@@ -244,7 +283,7 @@ export default class ConversationService {
     context.logInfo({
       message: CONVERSATION_MESSAGES.ONE_TO_ONE_CONVERSATION_CREATED_SUCCESSFULLY,
       source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this._createOneToOneConversation.name),
-      action: LOGS_ACTIONS.CONVERSATION,
+      action: CONVERSATION_MESSAGES.ONE_TO_ONE_CONVERSATION_CREATED_SUCCESSFULLY,
     });
   }
 }

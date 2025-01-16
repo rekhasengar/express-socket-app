@@ -8,8 +8,10 @@ import {
   AddUsersInGroupEventRequest,
   AdminRenameGroupEventRequest,
   EventRequest,
+  RemoveUserFromGroupEventRequest,
   SendMessageEventRequest,
   SocketRequest,
+  UserLeaveGroupEventRequest,
 } from '@src/types/request/socketRequest';
 import SocketEventHandler from './socketEventHandler';
 
@@ -83,21 +85,25 @@ export default class SocketConnector {
         break;
       }
       case SocketEventEnum.AddUserInGroup: {
-        socketEventHandler.addUserInGroupEvent(socketRequest.data as AddUsersInGroupEventRequest);
+        socketEventHandler.processAddUsersInGroupEvent(socketRequest.data as AddUsersInGroupEventRequest);
+        break;
+      }
+      case SocketEventEnum.LeaveGroup: {
+        socketEventHandler.processLeaveGroupEvent(socketRequest.data as UserLeaveGroupEventRequest);
+        break;
+      }
+      case SocketEventEnum.RemoveUserFromGroup: {
+        socketEventHandler.processRemoveUserFromGroupEvent(socketRequest.data as RemoveUserFromGroupEventRequest);
         break;
       }
       case SocketEventEnum.RenameGroup: {
         socketEventHandler.processAdminRenameGroupEvent(socketRequest.data as AdminRenameGroupEventRequest);
         break;
       }
-      // case SocketEventEnum.RemoveUserFromGroup: {
-      //   socketEventHandler.leaveGroupEvent(socketRequest.data as UserLeaveGroupEventRequest);
-      //   break;
-      // }
-      // case SocketEventEnum.UpdateUserRoleInGroup: {
-      //   socketEventHandler.updateUserRoleInGroupEvent(socketRequest.data as AdminUpdateRoleEventRequest);
-      //   break;
-      // }
+      case SocketEventEnum.UpdateUserRoleInGroup: {
+        // socketEventHandler.processUpdateUserRoleInGroupEvent(socketRequest.data as AdminUpdateRoleEventRequest);
+        break;
+      }
     }
   }
 }

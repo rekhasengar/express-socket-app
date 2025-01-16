@@ -11,6 +11,8 @@ export const USER_MESSAGES = {
   GET_ALL_ACTIVE_USERS_LIST: 'All active users list.',
   USER_KEY_NOT_FOUND_IN_CONVERSATION: 'User key not found in conversation.',
   YOU_DO_NOT_HAVE_ADMIN_PERMISSION: 'You do not have admin permissions.',
+  USER_STATUS_FETCHED_SUCCESSFULLY: 'User status fetched successfully.',
+  ERROR_WHILE_FETCHED_USER_STATUS: 'Error while fetched user status.',
 };
 
 export const AUTH_MESSAGES = {
@@ -26,6 +28,8 @@ export const AUTH_MESSAGES = {
 export const ROLE_MESSAGES = {
   ROLE_ADDED_SUCCESSFULLY: 'Role added successfully.',
   ADMIN_CAN_PERFORM_THIS_ACTION: 'This action can only be performed by an admin.',
+  USER_ROLE_NOT_FOUND: 'User role not found.',
+  USER_ROLE_FETCHED_SUCCESSFULLY: 'User role fetched successfully.',
 };
 
 export const CONVERSATION_MESSAGES = {
@@ -35,6 +39,7 @@ export const CONVERSATION_MESSAGES = {
   USER_NOT_FOUND_IN_THIS_CONVERSATION: 'You are not in this conversation.',
   CONVERSATION_NOT_FOUND: 'Conversation not found.',
   CONVERSATION_MESSAGE_NOT_FOUND: 'Conversation message not exists.',
+  CONVERSATION_MESSAGE_FETCHED_SUCCESSFULLY: ' Conversation message fetched successfully.',
 };
 
 export const CONTROLLER_MESSAGE = {

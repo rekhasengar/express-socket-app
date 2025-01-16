@@ -25,7 +25,7 @@ export default class MessageController {
   ): Promise<void> {
     const response = new ApiResponse<MessageResponse>();
     try {
-      const messageDto = new MessageDto(req.params, req.query);
+      const messageDto = new MessageDto(req.params, req.query, req.context, req.locale);
       const responseFromService = await this._messageService.getMessagesByConversationId(messageDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;

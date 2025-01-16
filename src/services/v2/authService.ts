@@ -7,9 +7,10 @@ import { AuthResponse, UserLoginResponse } from '@src/types/response/userRespons
 import UserService from './userService';
 import { UserRegisterDto, UserLoginDto, UserLogoutDto } from '@src/dtos/authDto';
 import { generateJWT } from '@src/utils/jwt';
-import RequestContext from '@src/helpers/context';
 import { AUTH_MESSAGES, USER_MESSAGES } from '@src/constants/messages';
-import { CONTROLLER_LOGS_MESSAGE, LOGS, LOGS_ACTIONS } from '@src/constants';
+import { ACTION_MESSAGE, LOGS } from '@src/constants';
+import { CustomErrorHandler } from '@src/helpers/customErrorHandler';
+import { getMessage } from '@src/config/messages';
 
 export default class AuthService {
   private readonly _userService: UserService;
@@ -18,60 +19,74 @@ export default class AuthService {
     this._userService = new UserService();
   }
 
-  public async registerUser(userRegisterDto: UserRegisterDto, context: RequestContext): Promise<AuthResponse> {
-    const userExists = await this._userService.getUserByEmail(userRegisterDto.email);
+  public async registerUser(userRegisterDto: UserRegisterDto): Promise<AuthResponse> {
+    const { firstName, lastName, email, password, context, locale } = userRegisterDto;
+
+    const userExists = await this._userService.getUserByEmail(email);
     if (userExists) {
       context.logError({
-        message: USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL,
         source: LOGS.SUCCESS_MESSAGE(AuthService.name, this.registerUser.name),
-        action: LOGS_ACTIONS.AUTH,
+        action: USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL,
+        message: getMessage(USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL),
       });
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL);
+      const message = getMessage(USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL, locale);
+      throw new CustomErrorHandler(
+        HttpStatusCode.BAD_REQUEST,
+        message,
+        USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL,
+      );
     }
+
     const userModel = new UserModel();
-    userModel.firstName = userRegisterDto.firstName;
-    userModel.lastName = userRegisterDto.lastName;
-    userModel.email = userRegisterDto.email;
-    userModel.password = userRegisterDto.password;
+    userModel.firstName = firstName;
+    userModel.lastName = lastName;
+    userModel.email = email;
+    userModel.password = password;
 
     await this._userService.createNewUser(userModel);
     context.logInfo({
-      message: CONTROLLER_LOGS_MESSAGE.REGISTER_PROCESS_COMPLETED,
       source: LOGS.ERROR_MESSAGE(AuthService.name, this.registerUser.name),
-      action: LOGS_ACTIONS.AUTH,
+      action: AUTH_MESSAGES.REGISTERED_SUCCESSFULLY,
+      message: ACTION_MESSAGE.REGISTER_PROCESS,
     });
+
     return {
       message: AUTH_MESSAGES.REGISTERED_SUCCESSFULLY,
     };
   }
 
-  public async userLogin(userLoginDto: UserLoginDto, context: RequestContext): Promise<UserLoginResponse> {
-    const { email, password } = userLoginDto;
+  public async userLogin(userLoginDto: UserLoginDto): Promise<UserLoginResponse> {
+    const { email, password, context, locale } = userLoginDto;
+
     const user = await this._userService.getUserByEmail(email);
     if (!user) {
       context.logError({
-        message: USER_MESSAGES.USER_NOT_FOUND_WITH_EMAIL,
         source: LOGS.ERROR_MESSAGE(AuthService.name, this.userLogin.name),
-        action: LOGS_ACTIONS.AUTH,
+        action: USER_MESSAGES.USER_NOT_FOUND,
+        message: getMessage(USER_MESSAGES.USER_NOT_FOUND),
       });
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.USER_NOT_FOUND_WITH_EMAIL);
+      const message = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
+      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.USER_NOT_FOUND);
     }
+
     const isPasswordMatched = await this._comparePassword(user.password, password);
     if (!isPasswordMatched) {
       context.logError({
-        message: AUTH_MESSAGES.INVALID_CREDENTIALS,
         source: LOGS.ERROR_MESSAGE(AuthService.name, this.userLogin.name),
-        action: LOGS_ACTIONS.AUTH,
+        action: AUTH_MESSAGES.INVALID_CREDENTIALS,
+        message: getMessage(AUTH_MESSAGES.INVALID_CREDENTIALS),
       });
-      throw new CustomError(HttpStatusCode.UNAUTHORIZED, AUTH_MESSAGES.INVALID_CREDENTIALS);
+      const message = getMessage(AUTH_MESSAGES.INVALID_CREDENTIALS, locale);
+      throw new CustomErrorHandler(HttpStatusCode.UNAUTHORIZED, message, AUTH_MESSAGES.INVALID_CREDENTIALS);
     }
+
     user.isLoginEnabled = true;
     const savedUser = await this._userService.saveUser(user);
     const token = generateJWT({ id: savedUser.id, email: savedUser.email });
     context.logInfo({
-      message: CONTROLLER_LOGS_MESSAGE.LOGOUT_PROCESS_COMPLETED,
       source: LOGS.SUCCESS_MESSAGE(AuthService.name, this.userLogin.name),
-      action: LOGS_ACTIONS.AUTH,
+      action: ACTION_MESSAGE.LOGIN_PROCESS,
+      message: ACTION_MESSAGE.LOGIN_PROCESS,
     });
     return {
       token,
@@ -79,13 +94,15 @@ export default class AuthService {
     };
   }
 
-  public async userLogout(userLogoutDto: UserLogoutDto, context: RequestContext): Promise<AuthResponse> {
-    await this._userService.updateUserByUserId(userLogoutDto.userId);
+  public async userLogout(userLogoutDto: UserLogoutDto): Promise<AuthResponse> {
+    const { userId, context } = userLogoutDto;
+
+    await this._userService.updateUserByUserId(userId);
 
     context.logInfo({
-      message: CONTROLLER_LOGS_MESSAGE.LOGIN_PROCESS_COMPLETED,
       source: LOGS.SUCCESS_MESSAGE(AuthService.name, this.userLogout.name),
-      action: LOGS_ACTIONS.AUTH,
+      action: ACTION_MESSAGE.LOGOUT_PROCESS,
+      message: getMessage(ACTION_MESSAGE.LOGIN_PROCESS),
     });
     return {
       message: AUTH_MESSAGES.LOGGED_OUT_SUCCESSFULLY,

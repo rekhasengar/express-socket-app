@@ -1,4 +1,4 @@
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { UserModel } from '@src/database/mysql/models/userModel';
 import { AppDataSource } from '@src/database/mysql/typeormConfig';

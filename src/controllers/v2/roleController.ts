@@ -22,8 +22,9 @@ export default class RoleController {
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<RoleResponse>();
+
     try {
-      const responseFromService = await this._roleService.geRoles();
+      const responseFromService = await this._roleService.geRoles(req.context, req.locale);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

@@ -9,6 +9,7 @@ import {
   AdminRenameGroupEventRequest,
   EventRequest,
   ReceiveMessageEventRequest,
+  RemoveUserFromGroupEventRequest,
   SendMessageEventRequest,
   UserLeaveGroupEventRequest,
 } from '@src/types/request/socketRequest';
@@ -102,7 +103,7 @@ export default class SocketEventHandler {
   public async processAdminRenameGroupEvent(adminRenameGroupEventRequest: AdminRenameGroupEventRequest): Promise<void> {
     const { adminId, conversationId, groupName } = adminRenameGroupEventRequest;
 
-    const conversation = await this._conversationService.getConversationByConversationIdAndUserId(
+    const conversation = await this._conversationService.getConversationByConversationIdAndUserIds(
       conversationId,
       [adminId],
       ['members', 'members.role'],
@@ -126,7 +127,7 @@ export default class SocketEventHandler {
     });
   }
 
-  public async addUserInGroupEvent(addUserInGroupEventRequest: AddUsersInGroupEventRequest): Promise<void> {
+  public async processAddUsersInGroupEvent(addUserInGroupEventRequest: AddUsersInGroupEventRequest): Promise<void> {
     const { conversationId, memberIds } = addUserInGroupEventRequest;
     let { adminId } = addUserInGroupEventRequest;
 
@@ -189,23 +190,48 @@ export default class SocketEventHandler {
     });
   }
 
-  public async leaveGroupEvent(userLeaveGroupEventRequest: UserLeaveGroupEventRequest): Promise<void> {
-    const { adminId, userId, conversationId } = userLeaveGroupEventRequest;
+  public async processLeaveGroupEvent(userLeaveGroupEventRequest: UserLeaveGroupEventRequest): Promise<void> {
+    const { userId, conversationId } = userLeaveGroupEventRequest;
 
-    const conversation = await this._conversationService.getConversationByConversationIdAndUserId(
+    const conversation = await this._conversationService.getConversationByConversationIdAndUserIds(
       conversationId,
-      userId ? [adminId, userId] : [adminId],
+      [userId],
       ['members', 'members.user', 'members.role'],
     );
     if (!conversation) {
       throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
     }
 
-    const isAdminRoleExits = conversation.members.find((conversationMember: ConversationMemberModel): boolean => {
-      return conversationMember.role.name === RolesEnum.ADMIN;
-    });
+    const member = conversation.members[0];
+    if (member.role.name !== RolesEnum.ADMIN) {
+      await this._leaveNormalUserFromGroup();
+    } else {
+      await this._leaveAdminUserFromGroup();
+    }
   }
 
+  public async processRemoveUserFromGroupEvent(
+    removeUserFromGroupEventRequest: RemoveUserFromGroupEventRequest,
+  ): Promise<void> {
+    const { adminId, userId, conversationId } = removeUserFromGroupEventRequest;
+
+    const conversation = await this._conversationService.getConversationByConversationIdAndUserIds(
+      conversationId,
+      [adminId, userId],
+      ['members', 'members.user', 'members.role'],
+    );
+    if (!conversation) {
+      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
+    }
+  }
+
+  private async _leaveNormalUserFromGroup(): Promise<void> {
+    throw new Error('Not implement yet.');
+  }
+
+  private async _leaveAdminUserFromGroup() {
+    throw new Error('Not implement yet.');
+  }
   private _emitEventToSocketConnections(
     sockets: SocketModel[],
     eventType: SocketEventEnum,

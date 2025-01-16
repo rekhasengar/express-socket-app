@@ -24,11 +24,10 @@ export default class AuthController {
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<AuthResponse>();
-    const { context } = req;
 
     try {
-      const userRegisterDto = new UserRegisterDto(req.body);
-      const responseFromService = await this._authService.registerUser(userRegisterDto, context);
+      const userRegisterDto = new UserRegisterDto(req.body, req.context, req.locale);
+      const responseFromService = await this._authService.registerUser(userRegisterDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
@@ -45,11 +44,10 @@ export default class AuthController {
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<UserLoginResponse>();
-    const { context } = req;
 
     try {
-      const userLoginDto = new UserLoginDto(req.body);
-      const responseFromService = await this._authService.userLogin(userLoginDto, context);
+      const userLoginDto = new UserLoginDto(req.body, req.context, req.locale);
+      const responseFromService = await this._authService.userLogin(userLoginDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
@@ -66,11 +64,10 @@ export default class AuthController {
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<AuthResponse>();
-    const { context } = req;
 
     try {
-      const userLogoutDto = new UserLogoutDto(req.params);
-      const responseFromService = await this._authService.userLogout(userLogoutDto, context);
+      const userLogoutDto = new UserLogoutDto(req.params, req.context);
+      const responseFromService = await this._authService.userLogout(userLogoutDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

@@ -2,11 +2,13 @@ import HttpStatusCode from 'http-status-codes';
 
 import { MessageModel } from '@src/database/mysql/models/messageModel';
 import MessageRepository from '@src/repositories/v2/messageRepository';
-import CustomError from '@src/shared/errorHandler/customError';
 import { MessageRequest } from '@src/types/request/socketRequest';
 import { MessageResponse, UserMessagesResponse } from '@src/types/response/messageResponse';
 import { CONVERSATION_MESSAGES } from '@src/constants/messages';
 import MessageDto from '@src/dtos/messageDto';
+import { ACTION_MESSAGE, LOGS } from '@src/constants';
+import { getMessage } from '@src/config/messages';
+import { CustomErrorHandler } from '@src/helpers/customErrorHandler';
 
 export default class MessageService {
   private readonly _messageRepository: MessageRepository;
@@ -34,14 +36,26 @@ export default class MessageService {
   }
 
   public async getMessagesByConversationId(messageDto: MessageDto): Promise<MessageResponse> {
+    const { conversationId, page, limit, context, locale } = messageDto;
+
     const conversationMessages = await this._messageRepository.getMessagesByConversationId(
-      messageDto.conversationId,
-      messageDto.page,
-      messageDto.limit,
+      conversationId,
+      page,
+      limit,
       ['conversation'],
     );
     if (!conversationMessages) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_NOT_FOUND);
+      context.logError({
+        source: LOGS.ERROR_MESSAGE(MessageService.name, this.getMessagesByConversationId.name),
+        action: ACTION_MESSAGE.CONVERSATION_MESSAGE_PROCESS,
+        message: getMessage(CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_NOT_FOUND),
+      });
+      const message = getMessage(CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_NOT_FOUND, locale);
+      throw new CustomErrorHandler(
+        HttpStatusCode.NOT_FOUND,
+        message,
+        CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_NOT_FOUND,
+      );
     }
 
     const userMessageResponse = new Array<UserMessagesResponse>();
@@ -52,6 +66,13 @@ export default class MessageService {
         createAt: message.createAt,
       });
     }
+
+    context.logInfo({
+      source: LOGS.SUCCESS_MESSAGE(MessageService.name, this.getMessagesByConversationId.name),
+      action: ACTION_MESSAGE.CONVERSATION_MESSAGE_PROCESS,
+      message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_FETCHED_SUCCESSFULLY,
+    });
+
     return {
       message: userMessageResponse,
     };

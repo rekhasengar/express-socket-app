@@ -8,7 +8,11 @@ import { CONTROLLER_MESSAGE } from '@src/constants/messages';
 import CustomError from '@src/shared/errorHandler/customError';
 import ConversationService from '@service/v2/conversationService';
 import { CreateConversationRequest, DeleteConversationMessagePathParams } from '@src/types/request/conversationRequest';
-import { CreateConversationDto, DeleteConversationMessageDto } from '@src/dtos/conversationDto';
+import {
+  CreateConversationDto,
+  DeleteConversationMessageDto,
+  GetConversationMessageDto,
+} from '@src/dtos/conversationDto';
 import EmptyObject from '@src/types/request/emptyObject';
 
 export default class ConversationController {
@@ -24,11 +28,10 @@ export default class ConversationController {
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<ConversationResponse>();
-    const { context } = req;
 
     try {
-      const createConversationDto = new CreateConversationDto(req.body, req.app.locals.userId);
-      const responseFromService = await this._conversationService.createNewConversation(createConversationDto, context);
+      const createConversationDto = new CreateConversationDto(req.body, req.app.locals.userId, req.context, req.locale);
+      const responseFromService = await this._conversationService.createNewConversation(createConversationDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
@@ -45,15 +48,10 @@ export default class ConversationController {
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<ConversationResponse>();
-    const { userId } = req.app.locals.userId;
-    const { context } = req;
 
     try {
-      const deleteConversationDto = new DeleteConversationMessageDto(req.params, userId);
-      const responseFromService = await this._conversationService.deleteConversationMessage(
-        deleteConversationDto,
-        context,
-      );
+      const deleteConversationDto = new DeleteConversationMessageDto(req.params, req.app.locals.userId, req.context);
+      const responseFromService = await this._conversationService.deleteConversationMessage(deleteConversationDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
@@ -70,11 +68,10 @@ export default class ConversationController {
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<GetConversationsResponse>();
-    const userId = req.app.locals.userId;
-    const { context } = req;
 
     try {
-      const responseFromService = await this._conversationService.getConversations(userId, context);
+      const getConversationMessageDto = new GetConversationMessageDto(req.app.locals.userId, req.context, req.locale);
+      const responseFromService = await this._conversationService.getConversations(getConversationMessageDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

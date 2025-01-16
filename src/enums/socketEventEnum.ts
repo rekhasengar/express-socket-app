@@ -8,6 +8,8 @@ enum SocketEventEnum {
   SendMessage = 'sendMessage',
   ReceiveMessage = 'receiveMessage',
 
+  DeleteMessage = 'deleteMessage',
+
   //User activity related events
   UserStatus = 'userStatus',
 

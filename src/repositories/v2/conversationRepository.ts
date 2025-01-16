@@ -33,7 +33,7 @@ export default class ConversationRepository {
     );
   }
 
-  public async getConversationByConversationIdAndUserId(
+  public async getConversationByConversationIdAndUserIds(
     conversationId: string,
     userIds: string[],
     relations?: string[],

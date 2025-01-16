@@ -42,13 +42,11 @@ export const LOGS = {
   },
 };
 
-export const LOGS_ACTIONS = {
-  AUTH: 'auth',
-  CONVERSATION: 'conversation',
-};
-
-export const CONTROLLER_LOGS_MESSAGE = {
-  REGISTER_PROCESS_COMPLETED: 'Register process complete.',
-  LOGIN_PROCESS_COMPLETED: 'Login process completed.',
-  LOGOUT_PROCESS_COMPLETED: 'Logout process completed.',
+export const ACTION_MESSAGE = {
+  REGISTER_PROCESS: 'Register process',
+  LOGIN_PROCESS: 'Login process',
+  LOGOUT_PROCESS: 'Logout process',
+  USER_STATUS_PROCESS: 'User status process',
+  USER_ROLE_PROCESS: 'User role process',
+  CONVERSATION_MESSAGE_PROCESS: 'Conversation message process.',
 };

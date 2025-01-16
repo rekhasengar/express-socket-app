@@ -3,14 +3,15 @@ import HttpStatusCode from 'http-status-codes';
 import UserRepository from '@src/repositories/v2/userRepository';
 import { UserModel } from '@src/database/mysql/models/userModel';
 import RequestContext from '@src/helpers/context';
-import { LOGS, LOGS_ACTIONS } from '@src/constants';
+import { ACTION_MESSAGE, LOGS } from '@src/constants';
 import { USER_MESSAGES } from '@src/constants/messages';
-import CustomError from '@src/shared/errorHandler/customError';
 import { GetActiveUsersResponse, GetUserStatusResponse, UserStatusResponse } from '@src/types/response/userResponse';
 import ConversationService from './conversationService';
 import UserStatusEnum from '@src/enums/userStatusEnum';
 import { SocketModel } from '@src/database/mysql/models/socketModel';
 import UserDto from '@src/dtos/userDto';
+import { getMessage } from '@src/config/messages';
+import { CustomErrorHandler } from '@src/helpers/customErrorHandler';
 
 export default class UserService {
   private readonly _userRepository: UserRepository;
@@ -38,20 +39,24 @@ export default class UserService {
   public async saveUser(user: UserModel): Promise<UserModel> {
     return await this._userRepository.saveUser(user);
   }
-  public async getAllActiveUserList(context: RequestContext, userDto: UserDto): Promise<GetActiveUsersResponse> {
-    const users = await this._userRepository.getCurrentActiveAllUsers(userDto.page, userDto.limit);
+  public async getAllActiveUserList(userDto: UserDto): Promise<GetActiveUsersResponse> {
+    const { page, limit, context } = userDto;
+
+    const users = await this._userRepository.getCurrentActiveAllUsers(page, limit);
     if (!users) {
       context.logError({
-        message: USER_MESSAGES.ACTIVE_USERS_NOT_FOUND,
         source: LOGS.ERROR_MESSAGE(ConversationService.name, this.getAllActiveUserList.name),
-        action: LOGS_ACTIONS.CONVERSATION,
+        action: USER_MESSAGES.ACTIVE_USERS_NOT_FOUND,
+        message: USER_MESSAGES.ACTIVE_USERS_NOT_FOUND,
       });
-      throw new CustomError(HttpStatusCode.NOT_FOUND, USER_MESSAGES.ACTIVE_USERS_NOT_FOUND);
+      const message = getMessage(USER_MESSAGES.ACTIVE_USERS_NOT_FOUND);
+      throw new CustomErrorHandler(HttpStatusCode.NOT_FOUND, message, USER_MESSAGES.ACTIVE_USERS_NOT_FOUND);
     }
+
     context.logInfo({
-      message: USER_MESSAGES.GET_ALL_ACTIVE_USERS_LIST,
       source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this.getAllActiveUserList.name),
-      action: LOGS_ACTIONS.CONVERSATION,
+      action: USER_MESSAGES.ACTIVE_USERS_NOT_FOUND,
+      message: USER_MESSAGES.GET_ALL_ACTIVE_USERS_LIST,
     });
     return {
       users: users,
@@ -79,6 +84,13 @@ export default class UserService {
 
   public async getAllUserStatus(context: RequestContext): Promise<GetUserStatusResponse> {
     const users = await this._userRepository.getAllUsers(['sockets']);
+    if (!users) {
+      context.logError({
+        source: LOGS.SUCCESS_MESSAGE(UserService.name, this.getAllUserStatus.name),
+        action: ACTION_MESSAGE.USER_STATUS_PROCESS,
+        message: USER_MESSAGES.ERROR_WHILE_FETCHED_USER_STATUS,
+      });
+    }
 
     const sockets = users
       .map((user: UserModel): SocketModel[] => {
@@ -106,9 +118,9 @@ export default class UserService {
       }
     }
     context.logInfo({
-      source: `${UserService.name} #${this.getAllUserStatus.name}`,
-      action: 'GetUserStatus',
-      message: 'User status get successfully.',
+      source: LOGS.SUCCESS_MESSAGE(UserService.name, this.getAllUserStatus.name),
+      action: ACTION_MESSAGE.USER_STATUS_PROCESS,
+      message: USER_MESSAGES.USER_STATUS_FETCHED_SUCCESSFULLY,
     });
 
     return {

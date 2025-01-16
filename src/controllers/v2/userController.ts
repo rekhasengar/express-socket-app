@@ -23,11 +23,10 @@ export default class UserController {
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<GetActiveUsersResponse>();
-    const { context } = req;
 
     try {
-      const userDto = new UserDto(req.query);
-      const responseFromService = await this._userService.getAllActiveUserList(context, userDto);
+      const userDto = new UserDto(req.query, req.context, req.locale);
+      const responseFromService = await this._userService.getAllActiveUserList(userDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
