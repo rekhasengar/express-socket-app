@@ -9,6 +9,7 @@ import { validateJwtToken } from '@src/utils/jwt';
 import CustomRequest from '@src/shared/types/customExpressRequest';
 import CustomError from '@src/shared/errorHandler/customError';
 import { AUTH_MESSAGES } from '@src/constants/messages';
+import UserRepository from '@src/repositories/user';
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export async function checkToken(req: Request, res: Response, next: NextFunction) {
@@ -25,10 +26,10 @@ export async function checkToken(req: Request, res: Response, next: NextFunction
       return _formErrorMessage(responseHandler, context, locale);
     }
     const id = payload.id;
-    // const user = await new UserRepository().findUser({ id: id as unknown as number }, ['id']);
-    // if (!user) {
-    //   return _formErrorMessage(responseHandler, context, locale);
-    // }
+    const user = await new UserRepository().findUser({ id: id as unknown as number }, ['id']);
+    if (!user) {
+      return _formErrorMessage(responseHandler, context, locale);
+    }
     req.app.locals.userId = id;
     return next();
   } catch (error) {

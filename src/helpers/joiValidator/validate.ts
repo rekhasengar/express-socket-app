@@ -95,7 +95,7 @@ async function validate(errObj: any, request: any, schema: any, location: any, a
   return errObj;
 }
 
-function ValidationError(this: any, errors: any, options: any) {
+function ValidationError(this: any, errors: any, options: any): void {
   this.name = 'ValidationError';
   this.message = 'validation error';
   this.errors = errors;

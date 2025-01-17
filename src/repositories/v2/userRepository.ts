@@ -10,22 +10,20 @@ export default class UserRepository {
     this._userModel = AppDataSource.getRepository(UserModel);
   }
 
-  public async getCurrentActiveAllUsers(page: number, limit: number): Promise<Array<UserModel>> {
-    const skip = (page - 1) * limit;
-
+  public async getAllRegisterUserList(): Promise<Array<UserModel>> {
     return await this._userModel.find({
+      where: {
+        deleted: false,
+      },
       select: {
         firstName: true,
         lastName: true,
         id: true,
-        deleted: false,
       },
-      skip,
-      take: limit,
     });
   }
 
-  public async getUserByUserId(userId: string, relations?: string[]): Promise<UserModel | null> {
+  public async getUserByUserId(userId: string, relations?: Array<string>): Promise<UserModel | null> {
     return await this._userModel.findOne({
       where: { id: userId },
       relations,
@@ -33,10 +31,11 @@ export default class UserRepository {
   }
 
   public async updateUserByUserId(userId: string): Promise<void> {
+    //need to remove isLoginEnabled contion
     await this._userModel.update({ id: userId }, { isLoginEnabled: false });
   }
 
-  public async getAllUserByUserIds(userIds: Array<string>, relations?: string[]): Promise<Array<UserModel>> {
+  public async getAllUserByUserIds(userIds: Array<string>, relations?: Array<string>): Promise<Array<UserModel>> {
     return await this._userModel.find({
       where: {
         id: In(userIds),
@@ -102,7 +101,7 @@ export default class UserRepository {
     });
   }
 
-  public async getUserIdBySocketId(socketId: string, relations?: string[]): Promise<UserModel | null> {
+  public async getUserIdBySocketId(socketId: string, relations?: Array<string>): Promise<UserModel | null> {
     return await this._userModel.findOne({
       where: {
         sockets: {
@@ -115,7 +114,7 @@ export default class UserRepository {
 
   public async getUsersByConversationIds(
     conversationIds: Array<string>,
-    relations?: string[],
+    relations?: Array<string>,
   ): Promise<Array<UserModel>> {
     return await this._userModel.find({
       where: {
@@ -129,9 +128,28 @@ export default class UserRepository {
     });
   }
 
-  public async getAllUsers(relations?: string[]): Promise<Array<UserModel>> {
+  public async getAllUsers(relations?: Array<string>): Promise<Array<UserModel>> {
+    //need to add where condition
     return await this._userModel.find({
       where: {},
+      relations,
+    });
+  }
+
+  public async getUserByUserIdAndConversationId(
+    userId: string,
+    conversationId: string,
+    relations?: Array<string>,
+  ): Promise<UserModel | null> {
+    return await this._userModel.findOne({
+      where: {
+        id: userId,
+        conversationMembers: {
+          conversation: {
+            id: conversationId,
+          },
+        },
+      },
       relations,
     });
   }

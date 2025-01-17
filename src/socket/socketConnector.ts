@@ -7,13 +7,18 @@ import SocketService from '@service/v2/socketService';
 import {
   AddUsersInGroupEventRequest,
   AdminRenameGroupEventRequest,
+  AdminUpdateRoleEventRequest,
   EventRequest,
   RemoveUserFromGroupEventRequest,
   SendMessageEventRequest,
+  SocketErrorRequest,
   SocketRequest,
   UserLeaveGroupEventRequest,
 } from '@src/types/request/socketRequest';
 import SocketEventHandler from './socketEventHandler';
+import CustomError from '@src/shared/errorHandler/customError';
+import { JWT_OBJECT } from '@src/types/jwt';
+import { UserModel } from '@src/database/mysql/models/userModel';
 
 export default class SocketConnector {
   private static _io: Server;
@@ -22,16 +27,16 @@ export default class SocketConnector {
     this._io = io;
     io.on('connection', async (socket: Socket) => {
       try {
-        const decodedToken = this._checkAndVerifyToken(socket.handshake.auth.token);
-        const userId = decodedToken.id;
-        const userService = new UserService();
-        const dbUser = await userService.getUserByUserId(userId as string);
+        const decodedToken: JWT_OBJECT = this._checkAndVerifyToken(socket.handshake.auth.token);
+        const userId: string | number = decodedToken.id;
+        const userService: UserService = new UserService();
+        const dbUser: UserModel | null = await userService.getUserByUserId(userId as string);
         if (!dbUser) {
           throw new Error('User not found.');
         }
 
         //storing socket connection details.
-        const socketService = new SocketService();
+        const socketService: SocketService = new SocketService();
         await socketService.createSocketModel(socket.id, dbUser.key);
         // Handle events
         this._handleEvents(socket);
@@ -39,25 +44,40 @@ export default class SocketConnector {
         // Emit connected event
         this._io.to(socket.id).emit(SocketEventEnum.Connected);
       } catch (error) {
-        socket.emit(
-          SocketEventEnum.SocketError,
-          error instanceof Error ? error?.message : 'Something went wrong connection with socket..',
-        );
+        const customError: CustomError = CustomError.getCustomErrorObject(error);
+        this.emitErrorEvent(socket.id, customError);
       }
     });
   }
 
   private static _handleEvents(socket: Socket) {
-    const socketEventHandler = new SocketEventHandler();
+    const socketEventHandler: SocketEventHandler = new SocketEventHandler();
 
     socket.on('event', async (socketRequest: SocketRequest) => {
-      this._processEvents(socketRequest);
+      try {
+        await this._processEvents(socketRequest);
+      } catch (error) {
+        const customError: CustomError = CustomError.getCustomErrorObject(error);
+        this.emitErrorEvent(socket.id, customError);
+      }
     });
 
     socket.on(SocketEventEnum.Disconnect, async () => {
       const socketId: string = socket.id;
       await socketEventHandler.processDisconnectEvent(socketId);
     });
+  }
+
+  public static emitErrorEvent(socketId: string, error: CustomError): void {
+    const socketErrorRequest: SocketErrorRequest = {
+      status: error.status,
+      message: error.message,
+      name: error.name,
+    };
+    const errorEventRequest = {
+      error: socketErrorRequest,
+    };
+    this._io.to(socketId).emit(SocketEventEnum.SocketError, errorEventRequest);
   }
 
   public static emitEvent(socketId: string, eventType: SocketEventEnum, eventRequest: EventRequest): void {
@@ -70,38 +90,38 @@ export default class SocketConnector {
     }
 
     //decoding token.
-    const decodedToken = validateJwtToken(token);
+    const decodedToken: JWT_OBJECT | null = validateJwtToken(token);
     if (!decodedToken) {
       throw new Error('Invalid token.');
     }
     return decodedToken;
   }
 
-  private static _processEvents(socketRequest: SocketRequest) {
-    const socketEventHandler = new SocketEventHandler();
+  private static async _processEvents(socketRequest: SocketRequest) {
+    const socketEventHandler: SocketEventHandler = new SocketEventHandler();
     switch (socketRequest.eventType) {
       case SocketEventEnum.SendMessage: {
-        socketEventHandler.processSendMessageEvent(socketRequest.data as SendMessageEventRequest);
+        await socketEventHandler.processSendMessageEvent(socketRequest.data as SendMessageEventRequest);
         break;
       }
       case SocketEventEnum.AddUserInGroup: {
-        socketEventHandler.processAddUsersInGroupEvent(socketRequest.data as AddUsersInGroupEventRequest);
+        await socketEventHandler.processAddUsersInGroupEvent(socketRequest.data as AddUsersInGroupEventRequest);
         break;
       }
       case SocketEventEnum.LeaveGroup: {
-        socketEventHandler.processLeaveGroupEvent(socketRequest.data as UserLeaveGroupEventRequest);
+        await socketEventHandler.processLeaveGroupEvent(socketRequest.data as UserLeaveGroupEventRequest);
         break;
       }
       case SocketEventEnum.RemoveUserFromGroup: {
-        socketEventHandler.processRemoveUserFromGroupEvent(socketRequest.data as RemoveUserFromGroupEventRequest);
+        await socketEventHandler.processRemoveUserFromGroupEvent(socketRequest.data as RemoveUserFromGroupEventRequest);
         break;
       }
       case SocketEventEnum.RenameGroup: {
-        socketEventHandler.processAdminRenameGroupEvent(socketRequest.data as AdminRenameGroupEventRequest);
+        await socketEventHandler.processAdminRenameGroupEvent(socketRequest.data as AdminRenameGroupEventRequest);
         break;
       }
       case SocketEventEnum.UpdateUserRoleInGroup: {
-        // socketEventHandler.processUpdateUserRoleInGroupEvent(socketRequest.data as AdminUpdateRoleEventRequest);
+        await socketEventHandler.processUpdateUserRoleInGroupEvent(socketRequest.data as AdminUpdateRoleEventRequest);
         break;
       }
     }

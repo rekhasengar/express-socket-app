@@ -22,14 +22,14 @@ export default class AuthService {
   public async registerUser(userRegisterDto: UserRegisterDto): Promise<AuthResponse> {
     const { firstName, lastName, email, password, context, locale } = userRegisterDto;
 
-    const userExists = await this._userService.getUserByEmail(email);
+    const userExists: UserModel | null = await this._userService.getUserByEmail(email);
     if (userExists) {
       context.logError({
         source: LOGS.SUCCESS_MESSAGE(AuthService.name, this.registerUser.name),
         action: USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL,
         message: getMessage(USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL),
       });
-      const message = getMessage(USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL, locale);
+      const message: string = getMessage(USER_MESSAGES.USER_ALREADY_EXISTS_WITH_THIS_EMAIL, locale);
       throw new CustomErrorHandler(
         HttpStatusCode.BAD_REQUEST,
         message,
@@ -37,7 +37,7 @@ export default class AuthService {
       );
     }
 
-    const userModel = new UserModel();
+    const userModel: UserModel = new UserModel();
     userModel.firstName = firstName;
     userModel.lastName = lastName;
     userModel.email = email;
@@ -58,31 +58,31 @@ export default class AuthService {
   public async userLogin(userLoginDto: UserLoginDto): Promise<UserLoginResponse> {
     const { email, password, context, locale } = userLoginDto;
 
-    const user = await this._userService.getUserByEmail(email);
+    const user: UserModel | null = await this._userService.getUserByEmail(email);
     if (!user) {
       context.logError({
         source: LOGS.ERROR_MESSAGE(AuthService.name, this.userLogin.name),
         action: USER_MESSAGES.USER_NOT_FOUND,
         message: getMessage(USER_MESSAGES.USER_NOT_FOUND),
       });
-      const message = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
+      const message: string = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
       throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.USER_NOT_FOUND);
     }
 
-    const isPasswordMatched = await this._comparePassword(user.password, password);
+    const isPasswordMatched: boolean = await this._comparePassword(user.password, password);
     if (!isPasswordMatched) {
       context.logError({
         source: LOGS.ERROR_MESSAGE(AuthService.name, this.userLogin.name),
         action: AUTH_MESSAGES.INVALID_CREDENTIALS,
         message: getMessage(AUTH_MESSAGES.INVALID_CREDENTIALS),
       });
-      const message = getMessage(AUTH_MESSAGES.INVALID_CREDENTIALS, locale);
+      const message: string = getMessage(AUTH_MESSAGES.INVALID_CREDENTIALS, locale);
       throw new CustomErrorHandler(HttpStatusCode.UNAUTHORIZED, message, AUTH_MESSAGES.INVALID_CREDENTIALS);
     }
 
     user.isLoginEnabled = true;
-    const savedUser = await this._userService.saveUser(user);
-    const token = generateJWT({ id: savedUser.id, email: savedUser.email });
+    const savedUser: UserModel = await this._userService.saveUser(user);
+    const token: string = generateJWT({ id: savedUser.id, email: savedUser.email });
     context.logInfo({
       source: LOGS.SUCCESS_MESSAGE(AuthService.name, this.userLogin.name),
       action: ACTION_MESSAGE.LOGIN_PROCESS,

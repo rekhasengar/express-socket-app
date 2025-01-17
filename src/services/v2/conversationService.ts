@@ -36,13 +36,14 @@ export default class ConversationService {
 
   public async getConversationByConversationId(
     conversationId: string,
-    relations?: string[],
+    relations?: Array<string>,
   ): Promise<ConversationModel | null> {
     return this._conversationRepository.getConversationByConversationId(conversationId, relations);
   }
 
   public async createNewConversation(createConversationDto: CreateConversationDto): Promise<ConversationResponse> {
-    const { context, adminId, userIds, groupName, locale } = createConversationDto;
+    const { context, userIds, groupName, isGroupChat, locale } = createConversationDto;
+    let { adminId } = createConversationDto;
 
     if (!userIds.length) {
       context.logError({
@@ -50,7 +51,7 @@ export default class ConversationService {
         source: LOGS.ERROR_MESSAGE(ConversationService.name, this.createNewConversation.name),
         action: USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION,
       });
-      const message = getMessage(USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION, locale);
+      const message: string = getMessage(USER_MESSAGES.ONE_USER_COMPULSORY_FOR_CONVERSATION, locale);
       throw new CustomErrorHandler(
         HttpStatusCode.BAD_REQUEST,
         message,
@@ -58,10 +59,45 @@ export default class ConversationService {
       );
     }
 
-    if (userIds.length === 1 && !groupName) {
-      await this._createOneToOneConversation(adminId, userIds, context, locale);
+    userIds.push(adminId);
+    const distinctUserIds: Array<string> = Array.from(new Set<string>(userIds));
+    const dbUsers: Array<UserModel> = await this._userService.getAllUserByUserIds(distinctUserIds);
+
+    adminId = adminId.trim().toLowerCase();
+    let admin: UserModel | undefined;
+    const users: Array<UserModel> = dbUsers.filter((user: UserModel): boolean => {
+      if (user.id.toLowerCase() === adminId) {
+        admin = user;
+        return false;
+      } else {
+        return true;
+      }
+    });
+
+    if (!admin) {
+      context.logError({
+        message: getMessage(USER_MESSAGES.ADMIN_NOT_FOUND),
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createOneToOneConversation.name),
+        action: USER_MESSAGES.ADMIN_NOT_FOUND,
+      });
+      const message: string = getMessage(USER_MESSAGES.ADMIN_NOT_FOUND, locale);
+      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.ADMIN_NOT_FOUND);
+    }
+    if (!users || !users.length) {
+      context.logError({
+        message: getMessage(USER_MESSAGES.USER_NOT_FOUND),
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createOneToOneConversation.name),
+        action: USER_MESSAGES.USER_NOT_FOUND,
+      });
+      const message: string = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
+      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.USER_NOT_FOUND);
+    }
+
+    users.push(admin);
+    if (isGroupChat && users.length > 1) {
+      await this._createGroupConversation(users, adminId, groupName, context);
     } else {
-      await this._createGroupConversation(adminId, userIds, groupName, context, locale);
+      await this._createOneToOneConversation(users, context);
     }
 
     context.logInfo({
@@ -95,18 +131,18 @@ export default class ConversationService {
   ): Promise<GetConversationsResponse> {
     const { userId, context, locale } = getConversationMessageDto;
 
-    const user = await this._userService.getUserConversationsForGetConversationApi(userId);
+    const user: UserModel | null = await this._userService.getUserConversationsForGetConversationApi(userId);
     if (!user) {
       context.logError({
         message: getMessage(USER_MESSAGES.USER_NOT_FOUND),
         source: LOGS.ERROR_MESSAGE(ConversationService.name, this.createNewConversation.name),
         action: USER_MESSAGES.USER_NOT_FOUND,
       });
-      const message = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
+      const message: string = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
       throw new CustomErrorHandler(HttpStatusCode.NOT_FOUND, message, USER_MESSAGES.USER_NOT_FOUND);
     }
 
-    const conversations = user.conversationMembers.map(
+    const conversations: Array<ConversationModel> = user.conversationMembers.map(
       (conversationMember: ConversationMemberModel): ConversationModel => {
         const conversation = conversationMember.conversation;
 
@@ -115,9 +151,11 @@ export default class ConversationService {
         );
 
         if (!conversation.isGroupChat) {
-          const secondMember = conversation.members.find((member: ConversationMemberModel): boolean => {
-            return member.user.id.toLowerCase() !== userId.toLowerCase();
-          });
+          const secondMember: ConversationMemberModel | undefined = conversation.members.find(
+            (member: ConversationMemberModel): boolean => {
+              return member.user.id.toLowerCase() !== userId.toLowerCase();
+            },
+          );
           if (secondMember) {
             conversation.name = `${secondMember.user.firstName} ${secondMember.user.lastName}`;
           }
@@ -145,8 +183,8 @@ export default class ConversationService {
 
   public async getConversationByConversationIdAndUserIds(
     conversationId: string,
-    userIds: string[],
-    relations?: string[],
+    userIds: Array<string>,
+    relations?: Array<string>,
   ): Promise<ConversationModel | null> {
     return await this._conversationRepository.getConversationByConversationIdAndUserIds(
       conversationId,
@@ -155,57 +193,16 @@ export default class ConversationService {
     );
   }
 
-  private async _createOneToOneConversation(
-    adminId: string,
-    userIds: string[],
-    context: RequestContext,
-    locale: string,
-  ): Promise<void> {
-    userIds.push(adminId);
-
-    const distinctUserIds = Array.from(new Set<string>(userIds));
-    const dbUsers = await this._userService.getAllUserByUserIds(distinctUserIds);
-
-    adminId = adminId.trim().toLowerCase();
-    let admin: UserModel | undefined;
-    const users = dbUsers.filter((user: UserModel): boolean => {
-      if (user.id.toLowerCase() == adminId) {
-        admin = user;
-        return false;
-      } else {
-        return true;
-      }
-    });
-
-    if (!admin) {
-      context.logError({
-        message: getMessage(USER_MESSAGES.ADMIN_NOT_FOUND),
-        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createOneToOneConversation.name),
-        action: USER_MESSAGES.ADMIN_NOT_FOUND,
-      });
-      const message = getMessage(USER_MESSAGES.ADMIN_NOT_FOUND, locale);
-      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.ADMIN_NOT_FOUND);
-    }
-    if (!users) {
-      context.logError({
-        message: getMessage(USER_MESSAGES.USER_NOT_FOUND),
-        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createOneToOneConversation.name),
-        action: USER_MESSAGES.USER_NOT_FOUND,
-      });
-      const message = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
-      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.USER_NOT_FOUND);
-    }
-
-    const conversationModel = new ConversationModel();
+  private async _createOneToOneConversation(users: Array<UserModel>, context: RequestContext): Promise<void> {
+    const conversationModel: ConversationModel = new ConversationModel();
     conversationModel.name = USER_CHAT_TYPE.ONE_TO_ONE_CHAT;
     conversationModel.isGroupChat = false;
-    const dbConversation = await this._conversationRepository.saveConversation(conversationModel);
+    const dbConversation: ConversationModel = await this._conversationRepository.saveConversation(conversationModel);
 
-    users.push(admin);
-    const userRoleKey = getRoleKeyByName(RolesEnum.USER);
-    const conversationMemberModels: ConversationMemberModel[] = [];
+    const userRoleKey: number = getRoleKeyByName(RolesEnum.USER);
+    const conversationMemberModels: Array<ConversationMemberModel> = [];
     for (const user of users) {
-      const conversationMemberModel = new ConversationMemberModel();
+      const conversationMemberModel: ConversationMemberModel = new ConversationMemberModel();
       conversationMemberModel.conversationKey = dbConversation.key;
       conversationMemberModel.userKey = user.key;
       conversationMemberModel.roleKey = userRoleKey;
@@ -221,56 +218,20 @@ export default class ConversationService {
   }
 
   private async _createGroupConversation(
+    users: Array<UserModel>,
     adminId: string,
-    userIds: string[],
     groupName: string | undefined,
     context: RequestContext,
-    locale: string,
   ): Promise<void> {
-    userIds.push(adminId);
-
-    const distinctUserIds = Array.from(new Set<string>(userIds));
-    const dbUsers = await this._userService.getAllUserByUserIds(distinctUserIds);
-
-    adminId = adminId.trim().toLowerCase();
-    let admin: UserModel | undefined;
-    const users = dbUsers.filter((user: UserModel): boolean => {
-      if (user.id.toLowerCase() == adminId) {
-        admin = user;
-        return false;
-      } else {
-        return true;
-      }
-    });
-
-    if (!admin) {
-      context.logError({
-        message: getMessage(USER_MESSAGES.ADMIN_NOT_FOUND),
-        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createGroupConversation.name),
-        action: USER_MESSAGES.ADMIN_NOT_FOUND,
-      });
-      const message = getMessage(USER_MESSAGES.ADMIN_NOT_FOUND, locale);
-      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.ADMIN_NOT_FOUND);
-    }
-    if (!users) {
-      context.logError({
-        message: getMessage(USER_MESSAGES.USER_NOT_FOUND),
-        source: LOGS.ERROR_MESSAGE(ConversationService.name, this._createGroupConversation.name),
-        action: USER_MESSAGES.USER_NOT_FOUND,
-      });
-      const message = getMessage(USER_MESSAGES.USER_NOT_FOUND, locale);
-      throw new CustomErrorHandler(HttpStatusCode.BAD_REQUEST, message, USER_MESSAGES.USER_NOT_FOUND);
-    }
-
-    const conversationModel = new ConversationModel();
+    const conversationModel: ConversationModel = new ConversationModel();
     conversationModel.name = groupName || 'group chat';
     conversationModel.isGroupChat = true;
-    const dbConversation = await this._conversationRepository.saveConversation(conversationModel);
+    const dbConversation: ConversationModel = await this._conversationRepository.saveConversation(conversationModel);
 
-    users.push(admin);
-    const userRoleKey = getRoleKeyByName(RolesEnum.USER);
-    const adminRoleKey = getRoleKeyByName(RolesEnum.ADMIN);
-    const conversationMemberModels: ConversationMemberModel[] = [];
+    const userRoleKey: number = getRoleKeyByName(RolesEnum.USER);
+    const adminRoleKey: number = getRoleKeyByName(RolesEnum.ADMIN);
+    //why we 2 time initialize object
+    const conversationMemberModels: Array<ConversationMemberModel> = new Array<ConversationMemberModel>();
     for (const user of users) {
       const conversationMemberModel = new ConversationMemberModel();
       conversationMemberModel.conversationKey = dbConversation.key;

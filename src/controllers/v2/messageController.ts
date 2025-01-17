@@ -18,7 +18,7 @@ export default class MessageController {
     this._messageService = new MessageService();
   }
 
-  public async getMessage(
+  public async getUserMessage(
     req: CustomRequest<MessagePathRequest, MessageResponse, EmptyObject, MessageQueryRequest>,
     res: Response<ApiResponse<MessageResponse>>,
     next: NextFunction,
@@ -26,7 +26,7 @@ export default class MessageController {
     const response = new ApiResponse<MessageResponse>();
     try {
       const messageDto = new MessageDto(req.params, req.query, req.context, req.locale);
-      const responseFromService = await this._messageService.getMessagesByConversationId(messageDto);
+      const responseFromService = await this._messageService.getUserMessage(messageDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

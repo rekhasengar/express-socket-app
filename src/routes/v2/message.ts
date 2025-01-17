@@ -15,7 +15,7 @@ messageRoute.get<
   RequestBody,
   QueryParams<MessageQueryRequest>
 >('/:conversationId', (...args): void => {
-  messageController.getMessage(...args);
+  messageController.getUserMessage(...args);
 });
 
 module.exports = { router: messageRoute, basePath: API_ROUTE.MESSAGES };

@@ -9,7 +9,6 @@ import { GetActiveUsersResponse, GetUserStatusResponse, UserStatusResponse } fro
 import ConversationService from './conversationService';
 import UserStatusEnum from '@src/enums/userStatusEnum';
 import { SocketModel } from '@src/database/mysql/models/socketModel';
-import UserDto from '@src/dtos/userDto';
 import { getMessage } from '@src/config/messages';
 import { CustomErrorHandler } from '@src/helpers/customErrorHandler';
 
@@ -20,7 +19,7 @@ export default class UserService {
     this._userRepository = new UserRepository();
   }
 
-  public async getUserByUserId(userId: string, relations?: string[]): Promise<UserModel | null> {
+  public async getUserByUserId(userId: string, relations?: Array<string>): Promise<UserModel | null> {
     return await this._userRepository.getUserByUserId(userId, relations);
   }
 
@@ -39,23 +38,21 @@ export default class UserService {
   public async saveUser(user: UserModel): Promise<UserModel> {
     return await this._userRepository.saveUser(user);
   }
-  public async getAllActiveUserList(userDto: UserDto): Promise<GetActiveUsersResponse> {
-    const { page, limit, context } = userDto;
-
-    const users = await this._userRepository.getCurrentActiveAllUsers(page, limit);
+  public async getAllUser(context: RequestContext): Promise<GetActiveUsersResponse> {
+    const users = await this._userRepository.getAllRegisterUserList();
     if (!users) {
       context.logError({
-        source: LOGS.ERROR_MESSAGE(ConversationService.name, this.getAllActiveUserList.name),
-        action: USER_MESSAGES.ACTIVE_USERS_NOT_FOUND,
+        source: LOGS.ERROR_MESSAGE(ConversationService.name, this.getAllUser.name),
+        action: ACTION_MESSAGE.GET_ALL_ACTIVE_USER_PROCESS,
         message: USER_MESSAGES.ACTIVE_USERS_NOT_FOUND,
       });
-      const message = getMessage(USER_MESSAGES.ACTIVE_USERS_NOT_FOUND);
+      const message: string = getMessage(USER_MESSAGES.ACTIVE_USERS_NOT_FOUND);
       throw new CustomErrorHandler(HttpStatusCode.NOT_FOUND, message, USER_MESSAGES.ACTIVE_USERS_NOT_FOUND);
     }
 
     context.logInfo({
-      source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this.getAllActiveUserList.name),
-      action: USER_MESSAGES.ACTIVE_USERS_NOT_FOUND,
+      source: LOGS.SUCCESS_MESSAGE(ConversationService.name, this.getAllUser.name),
+      action: ACTION_MESSAGE.GET_ALL_ACTIVE_USER_PROCESS,
       message: USER_MESSAGES.GET_ALL_ACTIVE_USERS_LIST,
     });
     return {
@@ -63,7 +60,7 @@ export default class UserService {
     };
   }
 
-  public async getAllUserByUserIds(userIds: Array<string>, relations?: string[]): Promise<Array<UserModel>> {
+  public async getAllUserByUserIds(userIds: Array<string>, relations?: Array<string>): Promise<Array<UserModel>> {
     return await this._userRepository.getAllUserByUserIds(userIds, relations);
   }
 
@@ -71,19 +68,19 @@ export default class UserService {
     return await this._userRepository.getUserConversationsForGetConversationApi(userId);
   }
 
-  public async getUserIdBySocketId(socketId: string, relations?: string[]): Promise<UserModel | null> {
+  public async getUserIdBySocketId(socketId: string, relations?: Array<string>): Promise<UserModel | null> {
     return await this._userRepository.getUserIdBySocketId(socketId, relations);
   }
 
   public async getUsersByConversationIds(
     conversationIds: Array<string>,
-    relations?: string[],
+    relations?: Array<string>,
   ): Promise<Array<UserModel>> {
     return await this._userRepository.getUsersByConversationIds(conversationIds, relations);
   }
 
   public async getAllUserStatus(context: RequestContext): Promise<GetUserStatusResponse> {
-    const users = await this._userRepository.getAllUsers(['sockets']);
+    const users: Array<UserModel> = await this._userRepository.getAllUsers(['sockets']);
     if (!users) {
       context.logError({
         source: LOGS.SUCCESS_MESSAGE(UserService.name, this.getAllUserStatus.name),
@@ -92,15 +89,15 @@ export default class UserService {
       });
     }
 
-    const sockets = users
+    const sockets: Array<SocketModel> = users
       .map((user: UserModel): SocketModel[] => {
         return user.sockets;
       })
       .flat();
 
-    const activeUsers = this._getSocketsWithinOneMinute(sockets);
+    const activeUsers: Array<SocketModel> = this._getSocketsWithinOneMinute(sockets);
 
-    const userStatusResponse = new Set<UserStatusResponse>();
+    const userStatusResponse: Set<UserStatusResponse> = new Set<UserStatusResponse>();
 
     for (const socket of sockets) {
       for (const activeUser of activeUsers) {
@@ -128,13 +125,21 @@ export default class UserService {
     };
   }
 
-  private _getSocketsWithinOneMinute(sockets: SocketModel[]): SocketModel[] {
-    const currentDate = new Date();
+  public async getUserByUserIdAndConversationId(
+    userId: string,
+    conversationId: string,
+    relations?: Array<string>,
+  ): Promise<UserModel | null> {
+    return await this._userRepository.getUserByUserIdAndConversationId(userId, conversationId, relations);
+  }
+
+  private _getSocketsWithinOneMinute(sockets: Array<SocketModel>): Array<SocketModel> {
+    const currentDate: Date = new Date();
 
     return sockets.filter((socket: SocketModel): boolean => {
-      const socketCreatedDate = new Date(socket.createAt);
-      const timeDifference = Math.abs(currentDate.getTime() - socketCreatedDate.getTime());
-      const oneMinuteInMilliseconds = 60 * 1000;
+      const socketCreatedDate: Date = new Date(socket.createAt);
+      const timeDifference: number = Math.abs(currentDate.getTime() - socketCreatedDate.getTime());
+      const oneMinuteInMilliseconds: number = 60 * 1000;
       return timeDifference <= oneMinuteInMilliseconds;
     });
   }

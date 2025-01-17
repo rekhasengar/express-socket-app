@@ -9,7 +9,7 @@ export default class SocketService {
   }
 
   public async createSocketModel(socketId: string, userKey: number): Promise<void> {
-    const socketModel = new SocketModel();
+    const socketModel: SocketModel = new SocketModel();
     socketModel.socketId = socketId;
     socketModel.userKey = userKey;
     await this._socketRepository.insert(socketModel);

@@ -9,7 +9,6 @@ import CustomRequest from '@src/shared/types/customExpressRequest';
 import EmptyObject from '@src/types/request/emptyObject';
 import { GetActiveUsersResponse, GetUserStatusResponse } from '@src/types/response/userResponse';
 import { GetCurrentUsersQueryParamRequest } from '@src/types/request/userRequest';
-import UserDto from '@src/dtos/userDto';
 
 export default class UserController {
   private readonly _userService: UserService;
@@ -17,7 +16,7 @@ export default class UserController {
   constructor() {
     this._userService = new UserService();
   }
-  public async getAllActiveUser(
+  public async getAllUser(
     req: CustomRequest<EmptyObject, GetActiveUsersResponse, EmptyObject, GetCurrentUsersQueryParamRequest>,
     res: Response<ApiResponse<GetActiveUsersResponse>>,
     next: NextFunction,
@@ -25,8 +24,7 @@ export default class UserController {
     const response = new ApiResponse<GetActiveUsersResponse>();
 
     try {
-      const userDto = new UserDto(req.query, req.context, req.locale);
-      const responseFromService = await this._userService.getAllActiveUserList(userDto);
+      const responseFromService = await this._userService.getAllUser(req.context);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

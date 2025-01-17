@@ -49,4 +49,5 @@ export const ACTION_MESSAGE = {
   USER_STATUS_PROCESS: 'User status process',
   USER_ROLE_PROCESS: 'User role process',
   CONVERSATION_MESSAGE_PROCESS: 'Conversation message process.',
+  GET_ALL_ACTIVE_USER_PROCESS: 'Fetching all active users from the database',
 };

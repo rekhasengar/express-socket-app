@@ -8,7 +8,26 @@ export default class ConversationMemberService {
     this._conversationMemberRepository = new ConversationMemberRepository();
   }
 
-  public async insertConversationMembers(conversationMemberModels: ConversationMemberModel[]): Promise<void> {
+  public async insertConversationMembers(conversationMemberModels: Array<ConversationMemberModel>): Promise<void> {
     await this._conversationMemberRepository.insertConversationMembers(conversationMemberModels);
+  }
+
+  public async updateByConversationMemberId(
+    conversationMemberId: string,
+    model: Partial<ConversationMemberModel>,
+  ): Promise<void> {
+    await this._conversationMemberRepository.updateByConversationMemberId(conversationMemberId, model);
+  }
+
+  public async deleteByConversationMemberId(conversationMemberId: string): Promise<void> {
+    await this._conversationMemberRepository.deleteByConversationMemberId(conversationMemberId);
+  }
+
+  public async getAdminMemberCountByConversationId(conversationId: string): Promise<number> {
+    return await this._conversationMemberRepository.getAdminMemberCountByConversationId(conversationId);
+  }
+
+  public async getFirstUserMemberByConversationId(conversationId: string): Promise<ConversationMemberModel | null> {
+    return await this._conversationMemberRepository.getFirstUserMemberByConversationId(conversationId);
   }
 }

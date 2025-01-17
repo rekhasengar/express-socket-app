@@ -22,7 +22,7 @@ export default class MessageService {
     conversationKey: number,
     senderKey: number,
   ): Promise<void> {
-    const messageModel = new MessageModel();
+    const messageModel: MessageModel = new MessageModel();
     messageModel.createAt = new Date(messageRequest.timestamp);
     messageModel.conversationKey = conversationKey;
     messageModel.senderKey = senderKey;
@@ -35,22 +35,22 @@ export default class MessageService {
     await this._messageRepository.deleteSingleMessage(senderId, messageId, conversationId);
   }
 
-  public async getMessagesByConversationId(messageDto: MessageDto): Promise<MessageResponse> {
+  public async getUserMessage(messageDto: MessageDto): Promise<MessageResponse> {
     const { conversationId, page, limit, context, locale } = messageDto;
 
-    const conversationMessages = await this._messageRepository.getMessagesByConversationId(
+    const { messages, totalMessageCount } = await this._messageRepository.getMessagesByConversationId(
       conversationId,
       page,
       limit,
       ['conversation'],
     );
-    if (!conversationMessages) {
+    if (!messages) {
       context.logError({
-        source: LOGS.ERROR_MESSAGE(MessageService.name, this.getMessagesByConversationId.name),
+        source: LOGS.ERROR_MESSAGE(MessageService.name, this.getUserMessage.name),
         action: ACTION_MESSAGE.CONVERSATION_MESSAGE_PROCESS,
         message: getMessage(CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_NOT_FOUND),
       });
-      const message = getMessage(CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_NOT_FOUND, locale);
+      const message: string = getMessage(CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_NOT_FOUND, locale);
       throw new CustomErrorHandler(
         HttpStatusCode.NOT_FOUND,
         message,
@@ -58,8 +58,8 @@ export default class MessageService {
       );
     }
 
-    const userMessageResponse = new Array<UserMessagesResponse>();
-    for (const message of conversationMessages) {
+    const userMessageResponse: Array<UserMessagesResponse> = new Array<UserMessagesResponse>();
+    for (const message of messages) {
       userMessageResponse.push({
         senderKey: message.senderKey,
         message: message.message || 'text empty',
@@ -68,13 +68,17 @@ export default class MessageService {
     }
 
     context.logInfo({
-      source: LOGS.SUCCESS_MESSAGE(MessageService.name, this.getMessagesByConversationId.name),
+      source: LOGS.SUCCESS_MESSAGE(MessageService.name, this.getUserMessage.name),
       action: ACTION_MESSAGE.CONVERSATION_MESSAGE_PROCESS,
       message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_FETCHED_SUCCESSFULLY,
     });
 
     return {
       message: userMessageResponse,
+      metaData: {
+        totalMessageCount: totalMessageCount,
+        messagePerPage: userMessageResponse.length,
+      },
     };
   }
 }

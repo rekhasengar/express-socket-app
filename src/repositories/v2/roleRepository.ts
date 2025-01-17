@@ -10,15 +10,18 @@ export default class RoleRepository {
     this._roleModel = AppDataSource.getRepository(RoleModel);
   }
 
-  public async addOrUpdateRoles(roleModels: RoleModel[]): Promise<void> {
+  public async addOrUpdateRoles(roleModels: Array<RoleModel>): Promise<void> {
     await this._roleModel.save(roleModels);
   }
 
-  public async getRoleKeyAndName(): Promise<RoleModel[]> {
-    return await this._roleModel.find({
-      select: {
-        key: true,
-        name: true,
+  public async getAllRoles(): Promise<Array<RoleModel>> {
+    return await this._roleModel.find();
+  }
+
+  public async getRoleByRoleId(roleId: string): Promise<RoleModel | null> {
+    return await this._roleModel.findOne({
+      where: {
+        id: roleId,
       },
     });
   }

@@ -12,7 +12,7 @@ export default class ConversationRepository {
 
   public async getConversationByConversationId(
     conversationId: string,
-    relations?: string[],
+    relations?: Array<string>,
   ): Promise<ConversationModel | null> {
     return await this._conversationModel.findOne({ where: { id: conversationId }, relations });
   }
@@ -35,8 +35,8 @@ export default class ConversationRepository {
 
   public async getConversationByConversationIdAndUserIds(
     conversationId: string,
-    userIds: string[],
-    relations?: string[],
+    userIds: Array<string>,
+    relations?: Array<string>,
   ): Promise<ConversationModel | null> {
     return await this._conversationModel.findOne({
       where: {

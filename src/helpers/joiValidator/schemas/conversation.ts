@@ -8,7 +8,7 @@ import { MESSAGE_VALIDATION } from '@src/constants';
 export = {
   CreateConversationRequest: joiValidationRequest<EmptyObject, CreateConversationRequest, EmptyObject, EmptyObject>({
     body: {
-      userId: Joi.array()
+      userIds: Joi.array()
         .items(Joi.string().required())
         .min(1) // At least one userId must be provided
         .required()

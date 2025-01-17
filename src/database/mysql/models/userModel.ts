@@ -44,6 +44,7 @@ export class UserModel extends ModelTemplate {
   @OneToMany(() => SocketModel, (socket) => socket.user)
   public sockets: SocketModel[];
 
+  //it is hook which is execute before insert data in db
   @BeforeInsert()
   public async encryptPassword(): Promise<void> {
     this.password = await bcrypt.hash(this.password, 10);

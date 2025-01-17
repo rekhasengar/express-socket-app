@@ -1,6 +1,7 @@
 export type CreateConversationRequest = {
-  userId: Array<string>;
+  userIds: Array<string>;
   groupName?: string;
+  isGroupChat?: boolean;
 };
 
 export type DeleteSingleConversationRequest = {

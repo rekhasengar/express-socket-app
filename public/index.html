@@ -125,6 +125,15 @@
           displayMessage(data.message.message, 'received');
         });
 
+        socket.on('updateUserRoleInGroup', (data) => {
+          console.log('Received group update:', data.message.message);
+          displayMessage(data.message.message, 'received');
+        });
+
+        socket.on('socketError', (data) => {
+          console.log('Error occurred: ', data);
+        });
+
         function displayMessage(messageText, type) {
           const messageContainer = document.getElementById('messageContainer');
           const messageWrapper = document.createElement('div');
@@ -154,16 +163,23 @@
           const decodedToken = jwt_decode(token);
           const userId = decodedToken.id;
           const payload = {
-            eventType: 'sendMessage',
+            // eventType: 'updateUserRoleInGroup',
+            // socketId: socket.id,
+            // data: {
+            //   conversationId: '7e989195-3742-4f39-adf5-56b5508b4a18',
+            //   senderId: userId,
+            //   message: {
+            //     id: uuid,
+            //     message: messageText,
+            //     timestamp: new Date().getTime(),
+            //   },
+            // },
+            eventType: 'addUserInGroup',
             socketId: socket.id,
             data: {
+              adminId: userId,
+              userId: ['e2c0e0fa-15f9-43e5-8496-3bdb8eb72557'],
               conversationId: '7e989195-3742-4f39-adf5-56b5508b4a18',
-              senderId: userId,
-              message: {
-                id: uuid,
-                message: messageText,
-                timestamp: new Date().getTime(),
-              },
             },
           };
 
@@ -171,6 +187,15 @@
           displayMessage(messageText, 'sent'); // Display the message immediately
           console.log('Message sent successfully!');
           messageInput.value = ''; // Clear the input after sending the message
+          socket.on('errorEvent', (error) => {
+            console.error('Error received from server:', error);
+
+            // Handle the error (e.g., display to the user)
+            alert(`Error: ${error.message} (Status: ${error.status})`);
+            if (error.stack) {
+              console.log('Stack Trace:', error.stack);
+            }
+          });
         });
       }
     </script>

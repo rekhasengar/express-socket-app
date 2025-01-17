@@ -15,7 +15,7 @@ userRoute.get<
   RequestBody,
   QueryParams<GetCurrentUsersQueryParamRequest>
 >('/current-users', (...args): void => {
-  userController.getAllActiveUser(...args);
+  userController.getAllUser(...args);
 });
 
 userRoute.get<PathParams, ResponseBody<GetUserStatusResponse>, RequestBody, QueryParams>('/status', (...args): void => {

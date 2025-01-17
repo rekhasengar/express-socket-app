@@ -23,17 +23,17 @@ export default class AuthController {
     res: Response<ApiResponse<AuthResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<AuthResponse>();
+    const response: ApiResponse<AuthResponse> = new ApiResponse<AuthResponse>();
 
     try {
-      const userRegisterDto = new UserRegisterDto(req.body, req.context, req.locale);
-      const responseFromService = await this._authService.registerUser(userRegisterDto);
+      const userRegisterDto: UserRegisterDto = new UserRegisterDto(req.body, req.context, req.locale);
+      const responseFromService: AuthResponse = await this._authService.registerUser(userRegisterDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }
@@ -43,7 +43,7 @@ export default class AuthController {
     res: Response<ApiResponse<UserLoginResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<UserLoginResponse>();
+    const response: ApiResponse<UserLoginResponse> = new ApiResponse<UserLoginResponse>();
 
     try {
       const userLoginDto = new UserLoginDto(req.body, req.context, req.locale);

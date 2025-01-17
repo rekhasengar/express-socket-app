@@ -3,6 +3,7 @@ import UserStatusEnum from '@src/enums/userStatusEnum';
 
 export type SocketRequest = {
   eventType: SocketEventEnum;
+  socketId: string;
   data: EventRequest;
 };
 
@@ -19,7 +20,8 @@ export type EventRequest =
   | AdminUpdateRoleEventRequest
   | AdminRenameGroupEventRequest
   | RemoveUserFromGroupEventRequest
-  | UserRemovedFromGroupEventRequest;
+  | UserRemovedFromGroupEventRequest
+  | SocketErrorEventRequest;
 
 export type MessageRequest = {
   id: string;
@@ -74,13 +76,13 @@ export type UserRemovedFromGroupEventRequest = {
 export type AddUsersInGroupEventRequest = {
   adminId: string;
   conversationId: string;
-  memberIds: string[];
+  userIds: string[];
 };
 //server will send to client.
 export type UsersAddedInGroupEventRequest = {
   adminId: string;
   conversationId: string;
-  memberIds: string[];
+  userIds: string[];
 };
 
 //client will send to server.
@@ -94,9 +96,10 @@ export type UserLeftGroupEventRequest = {
   userId: string; //who left group.
 };
 
+//client side
 export type AdminUpdateRoleEventRequest = {
   adminId: string;
-  memberId: string;
+  userId: string;
   roleId: string;
   conversationId: string;
 };
@@ -105,4 +108,14 @@ export type AdminRenameGroupEventRequest = {
   adminId: string;
   conversationId: string;
   groupName: string;
+};
+
+export type SocketErrorRequest = {
+  name: string;
+  status: number;
+  message: string;
+};
+
+export type SocketErrorEventRequest = {
+  error: SocketErrorRequest;
 };

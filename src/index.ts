@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
-// import helmet from 'helmet';
+import helmet from 'helmet';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
@@ -16,7 +16,7 @@ import constants from './constants';
 import CustomError from './shared/errorHandler/customError';
 import SocketConnector from './socket/socketConnector';
 import processRoleSeeder from './seeders/roleSeeder';
-// const blockedAt = require('blocked-at');
+import blockedAt from 'blocked-at';
 
 const app = express();
 
@@ -25,7 +25,7 @@ if (!isProduction) {
 }
 
 app.use(cors());
-// app.use(helmet());
+app.use(helmet());
 
 // request payload middleware
 app.use(express.json());
@@ -36,15 +36,15 @@ app.use(express.static('public'));
 
 // This is usually caused by synchronous operations that delay the event loop, such as long loop , disk I/O, or database operations.
 // AsyncHook.init: This is part of the blocked-at package's internal tracking of asynchronous operations.
-// blockedAt(
-//   (time: any, stack: any, resourceType: any) => {
-//     console.log('+++++++++++++++++++++++++++++++++');
-//     logger.info({ message: `Blocked for ${time}ms` });
-//     logger.info({ message: `Stack trace:\n${JSON.stringify(stack)}` });
-//     logger.info({ message: `Resource type: ${JSON.stringify(resourceType)}` });
-//   },
-//   { threshold: 20 },
-// );
+blockedAt(
+  (time: any, stack: any, resourceType: any) => {
+    console.log('+++++++++++++++++++++++++++++++++');
+    console.info({ message: `Blocked for ${time}ms` });
+    console.info({ message: `Stack trace:\n${JSON.stringify(stack)}` });
+    console.info({ message: `Resource type: ${JSON.stringify(resourceType)}` });
+  },
+  { threshold: 20 },
+);
 
 const httpServer = createServer(app);
 

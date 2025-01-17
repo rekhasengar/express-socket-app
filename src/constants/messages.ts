@@ -1,18 +1,19 @@
 export const USER_MESSAGES = {
   USER_ALREADY_EXISTS_WITH_THIS_EMAIL: 'User already exists with this email ID.',
   USER_NOT_REGISTER: 'You are not registered. Please register first.',
-  USER_ALREADY_EXIST_IN_CONVERSATION: 'User already exists in conversation.',
+  USER_ALREADY_EXISTS_IN_CONVERSATION: 'User already exists in conversation.',
+  USERS_ALREADY_EXISTS_IN_CONVERSATION: 'Users already exists in conversation.',
   USER_NOT_FOUND: 'User not found.',
   USER_ROLE_NOT_FOUND: 'User Role not exists.',
   ACTIVE_USERS_NOT_FOUND: 'Active users not founds.',
   ADMIN_NOT_FOUND: 'Admin not found.',
   ONE_USER_COMPULSORY_FOR_CONVERSATION: 'At least one user is required for the conversation.',
   USER_NOT_FOUND_WITH_EMAIL: 'User not found with this email.',
-  GET_ALL_ACTIVE_USERS_LIST: 'All active users list.',
-  USER_KEY_NOT_FOUND_IN_CONVERSATION: 'User key not found in conversation.',
+  GET_ALL_ACTIVE_USERS_LIST: 'Fetched all user successfully.',
   YOU_DO_NOT_HAVE_ADMIN_PERMISSION: 'You do not have admin permissions.',
   USER_STATUS_FETCHED_SUCCESSFULLY: 'User status fetched successfully.',
   ERROR_WHILE_FETCHED_USER_STATUS: 'Error while fetched user status.',
+  USER_NOT_FOUND_IN_CONVERSATION: 'User not found in conversation.',
 };
 
 export const AUTH_MESSAGES = {

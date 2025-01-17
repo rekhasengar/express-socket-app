@@ -4,6 +4,12 @@ export type UserMessagesResponse = {
   createAt: Date;
 };
 
+export type PaginationMetaData = {
+  totalMessageCount: number;
+  messagePerPage: number;
+};
+
 export type MessageResponse = {
   message: Array<UserMessagesResponse>;
+  metaData: PaginationMetaData;
 };

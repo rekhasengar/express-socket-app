@@ -16,7 +16,7 @@ export default class RoleController {
     this._roleService = new RoleService();
   }
 
-  public async geRoles(
+  public async getAllRoles(
     req: CustomRequest<EmptyObject, RoleResponse, EmptyObject, EmptyObject>,
     res: Response<ApiResponse<RoleResponse>>,
     next: NextFunction,
@@ -24,7 +24,7 @@ export default class RoleController {
     const response = new ApiResponse<RoleResponse>();
 
     try {
-      const responseFromService = await this._roleService.geRoles(req.context, req.locale);
+      const responseFromService = await this._roleService.getAllRoles(req.context, req.locale);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

@@ -9,7 +9,7 @@ const roleRoute = Router();
 const roleController = new RoleController();
 
 roleRoute.get<PathParams, ResponseBody<RoleResponse>, RequestBody, QueryParams>('/', (...args): void => {
-  roleController.geRoles(...args);
+  roleController.getAllRoles(...args);
 });
 
 module.exports = { router: roleRoute, basePath: API_ROUTE.ROLES };
