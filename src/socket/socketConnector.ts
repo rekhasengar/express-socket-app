@@ -2,13 +2,14 @@ import { Server, Socket } from 'socket.io';
 
 import { validateJwtToken } from '@src/utils/jwt';
 import SocketEventEnum from '@src/enums/socketEventEnum';
-import UserService from '@service/v2/userService';
-import SocketService from '@service/v2/socketService';
+import UserService from '@service/v1/userService';
+import SocketService from '@service/v1/socketService';
 import {
   AddUsersInGroupEventRequest,
   AdminRenameGroupEventRequest,
   AdminUpdateRoleEventRequest,
   EventRequest,
+  MessageStatusEventRequest,
   RemoveUserFromGroupEventRequest,
   SendMessageEventRequest,
   SocketErrorRequest,
@@ -27,6 +28,8 @@ export default class SocketConnector {
     this._io = io;
     io.on('connection', async (socket: Socket) => {
       try {
+        const socketEventHandler: SocketEventHandler = new SocketEventHandler();
+
         const decodedToken: JWT_OBJECT = this._checkAndVerifyToken(socket.handshake.auth.token);
         const userId: string | number = decodedToken.id;
         const userService: UserService = new UserService();
@@ -42,6 +45,7 @@ export default class SocketConnector {
         this._handleEvents(socket);
 
         // Emit connected event
+        await socketEventHandler.processConnectEvent(socket.id);
         this._io.to(socket.id).emit(SocketEventEnum.Connected);
       } catch (error) {
         const customError: CustomError = CustomError.getCustomErrorObject(error);
@@ -102,6 +106,10 @@ export default class SocketConnector {
     switch (socketRequest.eventType) {
       case SocketEventEnum.SendMessage: {
         await socketEventHandler.processSendMessageEvent(socketRequest.data as SendMessageEventRequest);
+        break;
+      }
+      case SocketEventEnum.MessageStatus: {
+        await socketEventHandler.processMessagesStatusEvent(socketRequest.data as MessageStatusEventRequest);
         break;
       }
       case SocketEventEnum.AddUserInGroup: {

@@ -6,13 +6,11 @@ export default class MessageDto {
   page: number;
   limit: number;
   context: RequestContext;
-  locale: string;
 
-  constructor(params: MessagePathRequest, query: MessageQueryRequest, context: RequestContext, locale: string) {
+  constructor(params: MessagePathRequest, query: MessageQueryRequest, context: RequestContext) {
     this.conversationId = params.conversationId;
     this.page = query.page || 1;
     this.limit = query.limit || 10;
     this.context = context;
-    this.locale = locale;
   }
 }

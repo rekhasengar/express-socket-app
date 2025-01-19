@@ -1,6 +1,6 @@
 import HttpStatusCode from 'http-status-codes';
 
-import ConversationService from '@service/v2/conversationService';
+import ConversationService from '@service/v1/conversationService';
 import { ConversationMemberModel } from '@src/database/mysql/models/conversationMemberModel';
 import { SocketModel } from '@src/database/mysql/models/socketModel';
 import SocketEventEnum from '@src/enums/socketEventEnum';
@@ -9,29 +9,40 @@ import {
   AdminRenameGroupEventRequest,
   AdminUpdateRoleEventRequest,
   EventRequest,
+  MessageStatusEventRequest,
   ReceiveMessageEventRequest,
   RemoveUserFromGroupEventRequest,
   SendMessageEventRequest,
   UserLeaveGroupEventRequest,
 } from '@src/types/request/socketRequest';
-import MessageService from '@service/v2/messageService';
+import MessageService from '@service/v1/messageService';
 import SocketConnector from './socketConnector';
 import CustomError from '@src/shared/errorHandler/customError';
-import { CONVERSATION_MESSAGES, ROLE_MESSAGES, USER_MESSAGES } from '@src/constants/messages';
-import UserService from '@service/v2/userService';
-import SocketService from '@service/v2/socketService';
+import {
+  CONVERSATION_MESSAGE_MESSAGES,
+  CONVERSATION_MESSAGES,
+  ROLE_MESSAGES,
+  USER_MESSAGES,
+} from '@src/constants/messages';
+import UserService from '@service/v1/userService';
+import SocketService from '@service/v1/socketService';
 import RolesEnum from '@src/enums/rolesEnum';
 import { UserModel } from '@src/database/mysql/models/userModel';
 import UserStatusEnum from '@src/enums/userStatusEnum';
 import { getRoleKeyByName } from '@src/seeders/roleSeeder';
-import ConversationMemberService from '@service/v2/conversationMemberService';
+import ConversationMemberService from '@service/v1/conversationMemberService';
 import { ConversationModel } from '@src/database/mysql/models/conversationModel';
-import RoleService from '@service/v2/roleService';
+import RoleService from '@service/v1/roleService';
 import { RoleModel } from '@src/database/mysql/models/roleModel';
+import { MessageStatusEnum } from '@src/enums/messageStatusEnum';
+import MessageStatusService from '@service/v1/messageStatusService';
+import { MessageStatusModel } from '@src/database/mysql/models/messageStatusModel';
+import { MessageModel } from '@src/database/mysql/models/messageModel';
 
 export default class SocketEventHandler {
   private readonly _conversationService: ConversationService;
   private readonly _messageService: MessageService;
+  private readonly _messageStatusService: MessageStatusService;
   private readonly _userService: UserService;
   private readonly _socketService: SocketService;
   private readonly _conversationMemberService: ConversationMemberService;
@@ -40,6 +51,7 @@ export default class SocketEventHandler {
   constructor() {
     this._conversationService = new ConversationService();
     this._messageService = new MessageService();
+    this._messageStatusService = new MessageStatusService();
     this._userService = new UserService();
     this._socketService = new SocketService();
     this._conversationMemberService = new ConversationMemberService();
@@ -47,47 +59,94 @@ export default class SocketEventHandler {
   }
 
   public async processSendMessageEvent(sendMessageEventRequest: SendMessageEventRequest): Promise<void> {
-    const { conversationId, message } = sendMessageEventRequest;
-    let { senderId } = sendMessageEventRequest;
-    const dbConversation: ConversationModel | null = await this._conversationService.getConversationByConversationId(
-      conversationId,
-      ['members', 'members.user', 'members.user.sockets'],
-    );
-    if (!dbConversation) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
-    }
+    const { conversationId, message, senderId } = sendMessageEventRequest;
 
-    senderId = senderId.toLowerCase();
-    const dbUser: ConversationMemberModel | undefined = dbConversation.members.find(
-      (conversationMember: ConversationMemberModel): boolean => conversationMember.user.id.toLowerCase() == senderId,
-    );
-    if (!dbUser) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.USER_NOT_FOUND_IN_THIS_CONVERSATION);
-    }
-
-    await this._messageService.insertMessage(message, dbConversation.key, dbUser.key);
+    let dbConversation: ConversationModel | null =
+      await this._conversationService.getConversationByConversationIdAndUserIds(
+        conversationId,
+        [senderId],
+        ['members.user'],
+      );
+    dbConversation = this._validateConversation(dbConversation);
+    let dbUser: UserModel | null = dbConversation.members[0].user;
+    dbUser = this._validateUserModel(dbUser);
+    const savedMessage: MessageModel = await this._messageService.saveMessage(message, dbConversation.key, dbUser.key);
     const receiveMessageRequest: ReceiveMessageEventRequest = {
       senderId: senderId,
       conversationId,
       message,
     };
-    for (const member of dbConversation.members) {
-      if (member.user.id.toLowerCase() === senderId) {
-        continue;
-      }
-      this._emitEventToSocketConnections(member.user.sockets, SocketEventEnum.ReceiveMessage, receiveMessageRequest);
-    }
+    const users: Array<UserModel> = await this._userService.getUsersByConversationIds([conversationId], ['sockets']);
+    this._emitEventToUsers(users, senderId, SocketEventEnum.ReceiveMessage, receiveMessageRequest);
+
+    //Saving message status in the database.
+    const messageStatusModel = new MessageStatusModel();
+    messageStatusModel.messageKey = savedMessage.key;
+    messageStatusModel.userKey = dbUser.key;
+    messageStatusModel.status = MessageStatusEnum.SENT;
+    messageStatusModel.timestamp = message.timestamp;
+    messageStatusModel.timezone = message.timezone;
+    await this._messageStatusService.insertMessageStatus(messageStatusModel);
   }
 
-  public async processDisconnectEvent(socketId: string): Promise<void> {
-    const user: UserModel | null = await this._userService.getUserIdBySocketId(socketId, [
+  public async processMessagesStatusEvent(messageStatusEventRequest: MessageStatusEventRequest): Promise<void> {
+    const { conversationId, userId, messageId, status, timestamp, timezone } = messageStatusEventRequest;
+
+    const dbMessage: MessageModel | null = await this._messageService.getMessageByConversationIdMessageIdAndUserId(
+      conversationId,
+      messageId,
+      userId,
+      ['conversation', 'conversation.members', 'conversation.members.user'],
+    );
+    if (!dbMessage) {
+      throw CustomError.getNotFoundError(
+        CONVERSATION_MESSAGE_MESSAGES.MESSAGE_NOT_FOUND_WITH_CONVERSATION_AND_MESSAGE_ID,
+      );
+    }
+    let dbUser: UserModel | undefined = dbMessage.conversation?.members[0]?.user;
+    dbUser = this._validateUserModel(dbUser);
+
+    //saving message status.
+    const messageStatusModel: MessageStatusModel = new MessageStatusModel();
+    messageStatusModel.messageKey = dbMessage.key;
+    messageStatusModel.userKey = dbUser.key;
+    messageStatusModel.status = status;
+    messageStatusModel.timestamp = timestamp;
+    messageStatusModel.timezone = timezone;
+    await this._messageStatusService.insertMessageStatus(messageStatusModel);
+    const users: Array<UserModel> = await this._userService.getUsersByConversationIds([conversationId], ['sockets']);
+    this._emitEventToUsers(users, userId, SocketEventEnum.MessageStatus, messageStatusEventRequest);
+  }
+
+  public async processConnectEvent(socketId: string): Promise<void> {
+    let user: UserModel | null = await this._userService.getUserIdBySocketId(socketId, [
       'conversationMembers',
       'conversationMembers.conversation',
     ]);
-    if (!user) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, USER_MESSAGES.USER_NOT_FOUND);
-    }
+    user = this._validateUserModel(user);
+    const conversationIds: Array<string> = user.conversationMembers.map(
+      (conversationMembers: ConversationMemberModel): string => {
+        return conversationMembers.conversation.id;
+      },
+    );
+    const userId = user.id;
 
+    const dbUsers: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(conversationIds, [
+      'sockets',
+    ]);
+    const users = dbUsers.filter((user: UserModel): boolean => user.id !== userId);
+    this._emitEventToUsers(users, userId, SocketEventEnum.UserStatus, {
+      userId,
+      status: UserStatusEnum.ONLINE,
+    });
+  }
+
+  public async processDisconnectEvent(socketId: string): Promise<void> {
+    let user: UserModel | null = await this._userService.getUserIdBySocketId(socketId, [
+      'conversationMembers',
+      'conversationMembers.conversation',
+    ]);
+    user = this._validateUserModel(user);
     const conversationIds: Array<string> = user.conversationMembers.map(
       (conversationMembers: ConversationMemberModel): string => {
         return conversationMembers.conversation.id;
@@ -117,13 +176,11 @@ export default class SocketEventHandler {
         ['members', 'members.role'],
       );
     if (!conversation || !conversation.isGroupChat) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
+      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_COULD_NOT_BE_FOUND);
     }
 
-    const member: ConversationMemberModel = conversation.members[0];
-    if (member.role.name !== RolesEnum.ADMIN) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.YOU_DO_NOT_HAVE_ADMIN_PERMISSION);
-    }
+    const adminMember: ConversationMemberModel = conversation.members[0];
+    this._validateAdminMember(adminMember);
 
     await this._conversationService.updateByConversationId(conversationId, groupName);
     //First we need to check all above condition then we need to call all users
@@ -138,67 +195,62 @@ export default class SocketEventHandler {
   public async processAddUsersInGroupEvent(addUserInGroupEventRequest: AddUsersInGroupEventRequest): Promise<void> {
     const { conversationId, userIds } = addUserInGroupEventRequest;
     let { adminId } = addUserInGroupEventRequest;
+    adminId = adminId.toLowerCase();
 
-    const conversation: ConversationModel | null = await this._conversationService.getConversationByConversationId(
+    let conversation: ConversationModel | null = await this._conversationService.getConversationByConversationId(
       conversationId,
-      ['members', 'members.user'],
+      ['members', 'members.user', 'members.user.sockets'],
     );
-    if (!conversation) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
-    }
+    conversation = this._validateConversation(conversation);
 
-    const userIdsNotInConversation = userIds.filter((userId: string): boolean => {
-      const conversationMember = conversation.members.find((member: ConversationMemberModel): boolean => {
-        return member.user.id.toLowerCase() === userId.toLowerCase();
-      });
-      return conversationMember ? true : false;
-    });
-    if (userIdsNotInConversation) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.USERS_ALREADY_EXISTS_IN_CONVERSATION);
-    }
-
-    const conversationMemberUsers: Array<UserModel> = conversation.members.map(
-      (conversationMember: ConversationMemberModel): UserModel => {
-        return conversationMember.user;
+    //validating admin and its role.
+    const conversationOldMembers: ConversationMemberModel[] = conversation.members;
+    const adminMember: ConversationMemberModel | undefined = conversationOldMembers.find(
+      (member: ConversationMemberModel): boolean => {
+        return member.user.id.toLowerCase() == adminId;
       },
     );
+    this._validateAdminMember(adminMember);
 
-    userIds.push(adminId);
-    const distinctUserIds: Array<string> = Array.from(new Set<string>(userIds));
-    const dbUsers: Array<UserModel> = await this._userService.getAllUserByUserIds(distinctUserIds, ['sockets']);
-
-    adminId = adminId.trim().toLowerCase();
-    let admin: UserModel | undefined;
-    const users = dbUsers.filter((user: UserModel): boolean => {
-      if (user.id.toLowerCase() == adminId) {
-        admin = user;
-        return false;
-      } else {
-        return true;
-      }
+    const userIdsToAddInConversation: string[] = userIds.filter((userId: string): boolean => {
+      const conversationMember: ConversationMemberModel | undefined = conversationOldMembers.find(
+        (member: ConversationMemberModel): boolean => {
+          return member.user.id.toLowerCase() === userId.toLowerCase();
+        },
+      );
+      return conversationMember ? false : true;
     });
-
-    if (!admin) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.ADMIN_NOT_FOUND);
-    }
-    if (!users) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.USER_NOT_FOUND);
+    if (!userIdsToAddInConversation.length) {
+      return;
     }
 
+    const usersToAddInConversation: UserModel[] = await this._userService.getAllUserByUserIds(
+      userIdsToAddInConversation,
+      ['sockets'],
+    );
+    const newConversationMemberModels: ConversationMemberModel[] = [];
     const userRoleKey: number = getRoleKeyByName(RolesEnum.USER);
-    const conversationMemberModels: Array<ConversationMemberModel> = [];
-    for (const user of users) {
-      const conversationMemberModel = new ConversationMemberModel();
-      conversationMemberModel.conversationKey = conversation.key;
-      conversationMemberModel.userKey = user.key;
-      conversationMemberModel.roleKey = userRoleKey;
-      conversationMemberModels.push(conversationMemberModel);
+    for (const userToAddInConversation of usersToAddInConversation) {
+      const newConversationMemberModel = new ConversationMemberModel();
+      newConversationMemberModel.conversationKey = conversation.key;
+      newConversationMemberModel.userKey = userToAddInConversation.key;
+      newConversationMemberModel.roleKey = userRoleKey;
+      newConversationMemberModels.push(newConversationMemberModel);
     }
-    await this._conversationMemberService.insertConversationMembers(conversationMemberModels);
-    this._emitEventToUsers(conversationMemberUsers, adminId, SocketEventEnum.JoinChat, {
+    await this._conversationMemberService.insertConversationMembers(newConversationMemberModels);
+
+    //sending event to old users that new user added.
+    const conversationOldUsers: UserModel[] = conversationOldMembers.map(
+      (oldMember: ConversationMemberModel): UserModel => oldMember.user,
+    );
+    this._emitEventToUsers(conversationOldUsers, adminId, SocketEventEnum.AddUserInGroup, {
       adminId,
       conversationId,
-      userIds: userIds,
+      userIds: userIdsToAddInConversation,
+    });
+    //sending event to users who added in the conversation.
+    this._emitEventToUsers(usersToAddInConversation, adminId, SocketEventEnum.JoinChat, {
+      conversationId,
     });
   }
 
@@ -212,7 +264,7 @@ export default class SocketEventHandler {
         ['members', 'members.user', 'members.role'],
       );
     if (!conversation || !conversation.isGroupChat) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
+      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_COULD_NOT_BE_FOUND);
     }
 
     const member: ConversationMemberModel = conversation.members[0];
@@ -242,68 +294,89 @@ export default class SocketEventHandler {
   ): Promise<void> {
     const { adminId, userId, conversationId } = removeUserFromGroupEventRequest;
 
-    const conversation: ConversationModel | null =
+    let conversation: ConversationModel | null =
       await this._conversationService.getConversationByConversationIdAndUserIds(
         conversationId,
         [adminId, userId],
         ['members', 'members.user', 'members.role'],
       );
-    if (!conversation) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
+    conversation = this._validateConversation(conversation);
+
+    const conversationMembers = conversation.members;
+    let adminMember: ConversationMemberModel | undefined, userMember: ConversationMemberModel | undefined;
+    for (const conversationMember of conversationMembers) {
+      const conversationMemberUser = conversationMember.user;
+      if (conversationMemberUser.id == adminId) adminMember = conversationMember;
+      if (conversationMemberUser.id == userId) userMember = conversationMember;
     }
+    this._validateAdminMember(adminMember);
+    userMember = this._validateUserMember(userMember);
+
+    await this._conversationMemberService.deleteByConversationMemberId(userMember.id);
+    const users: Array<UserModel> = await this._userService.getUsersByConversationIds([conversationId], ['sockets']);
+    this._emitEventToUsers(users, adminId, SocketEventEnum.RemoveUserFromGroup, removeUserFromGroupEventRequest);
   }
 
   public async processUpdateUserRoleInGroupEvent(adminUpdateRoleEvent: AdminUpdateRoleEventRequest): Promise<void> {
     const { adminId, userId, roleId, conversationId } = adminUpdateRoleEvent;
 
-    const conversation: ConversationModel | null =
+    let conversation: ConversationModel | null =
       await this._conversationService.getConversationByConversationIdAndUserIds(
         conversationId,
         [userId, adminId],
         ['members', 'members.user', 'members.user.sockets', 'members.role'],
       );
-    if (!conversation) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
-    }
+    conversation = this._validateConversation(conversation);
 
-    const adminMember: ConversationMemberModel | undefined = conversation.members.find(
-      (conversationMember: ConversationMemberModel): boolean => {
-        return conversationMember.user.id == adminId;
-      },
-    );
-    if (!adminMember) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, USER_MESSAGES.ADMIN_NOT_FOUND);
+    const conversationMembers = conversation.members;
+    let adminMember: ConversationMemberModel | undefined, userMember: ConversationMemberModel | undefined;
+    for (const conversationMember of conversationMembers) {
+      const conversationMemberUser = conversationMember.user;
+      if (conversationMemberUser.id == adminId) adminMember = conversationMember;
+      if (conversationMemberUser.id == userId) userMember = conversationMember;
     }
-    if (adminMember.role.name !== RolesEnum.ADMIN) {
-      throw new CustomError(HttpStatusCode.BAD_REQUEST, USER_MESSAGES.YOU_DO_NOT_HAVE_ADMIN_PERMISSION);
-    }
-
-    const userMember: ConversationMemberModel | undefined = conversation.members.find(
-      (conversationMember: ConversationMemberModel): boolean => {
-        return conversationMember.user.id == userId;
-      },
-    );
-    if (!userMember) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, USER_MESSAGES.USER_NOT_FOUND);
-    }
+    this._validateAdminMember(adminMember);
+    userMember = this._validateUserMember(userMember);
 
     const role: RoleModel | null = await this._roleService.getRoleByRoleId(roleId);
     if (!role) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, ROLE_MESSAGES.USER_ROLE_NOT_FOUND);
+      throw new CustomError(HttpStatusCode.NOT_FOUND, ROLE_MESSAGES.USER_ROLES_COULD_NOT_BE_FOUND);
     }
-
     await this._conversationMemberService.updateByConversationMemberId(userMember.id, { roleKey: role.key });
 
-    const updateRoleUser: Array<UserModel> = conversation.members
-      .filter((conversationMember: ConversationMemberModel) => conversationMember.user.id === userId)
-      .map((conversationMember: ConversationMemberModel): UserModel => conversationMember.user);
+    //We only need to send the user role update event to the user whose role has been updated.
+    this._emitEventToUsers([userMember.user], adminId, SocketEventEnum.UpdateUserRoleInGroup, adminUpdateRoleEvent);
+  }
 
-    await this._emitEventToUsers(updateRoleUser, adminId, SocketEventEnum.UpdateUserRoleInGroup, {
-      conversationId,
-      adminId,
-      userId,
-      roleId,
-    });
+  private _validateConversation(conversation?: ConversationModel | null): ConversationModel {
+    if (!conversation) {
+      throw CustomError.getNotFoundError(CONVERSATION_MESSAGES.CONVERSATION_COULD_NOT_BE_FOUND);
+    }
+    return conversation;
+  }
+
+  private _validateAdminMember(adminMember?: ConversationMemberModel): ConversationMemberModel {
+    if (!adminMember) {
+      throw CustomError.getNotFoundError(USER_MESSAGES.ADMIN_NOT_FOUND);
+    }
+    if (adminMember.role.name !== RolesEnum.ADMIN) {
+      throw CustomError.getBadRequestError(USER_MESSAGES.YOU_DO_NOT_HAVE_ADMIN_PERMISSION);
+    }
+    return adminMember;
+  }
+
+  private _validateUserModel(user?: UserModel | null): UserModel {
+    if (!user) {
+      throw CustomError.getNotFoundError(USER_MESSAGES.USER_NOT_FOUND);
+    }
+    return user;
+  }
+
+  private _validateUserMember(conversationMember?: ConversationMemberModel | null): ConversationMemberModel {
+    if (!conversationMember) {
+      throw CustomError.getNotFoundError(USER_MESSAGES.USER_NOT_FOUND);
+    }
+    return conversationMember;
   }
 
   private _emitEventToSocketConnections(

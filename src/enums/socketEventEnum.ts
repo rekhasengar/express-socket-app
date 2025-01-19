@@ -1,28 +1,22 @@
 enum SocketEventEnum {
-  // Connection-related events
-  Connected = 'connected',
+  //Server side event.
   Disconnect = 'disconnect',
   SocketError = 'socketError',
-
-  // Message-related events
   SendMessage = 'sendMessage',
-  ReceiveMessage = 'receiveMessage',
 
-  DeleteMessage = 'deleteMessage',
-
-  //User activity related events
-  UserStatus = 'userStatus',
-
-  //Conversation related event
+  //common event.
+  MessageStatus = 'messageStatus',
+  DeleteMessage = 'deleteMessage', //need to discuss with sir.
+  UserStatus = 'userStatus', //need to handle in the backend.
   RemoveUserFromGroup = 'removeUserFromGroup',
+  AddUserInGroup = 'addUserInGroup',
   LeaveGroup = 'leaveGroup',
-
   RenameGroup = 'renameGroup',
-
   UpdateUserRoleInGroup = 'updateUserRoleInGroup',
 
-  // Chat and group events
-  AddUserInGroup = 'addUserInGroup',
+  //Client side event.
+  Connected = 'connected',
+  ReceiveMessage = 'receiveMessage',
   JoinChat = 'joinChat',
 }
 

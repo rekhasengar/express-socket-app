@@ -3,7 +3,7 @@ import Joi from 'joi';
 import { joiValidationRequest } from '@src/helpers/joiValidator/index';
 import EmptyObject from '@src/types/request/emptyObject';
 import { CreateConversationRequest, DeleteConversationMessagePathParams } from '@src/types/request/conversationRequest';
-import { MESSAGE_VALIDATION } from '@src/constants';
+import { JOI_VALIDATION_MESSAGE } from '@src/constants';
 
 export = {
   CreateConversationRequest: joiValidationRequest<EmptyObject, CreateConversationRequest, EmptyObject, EmptyObject>({
@@ -12,8 +12,8 @@ export = {
         .items(Joi.string().required())
         .min(1) // At least one userId must be provided
         .required()
-        .description(MESSAGE_VALIDATION.USER_ID),
-      groupName: Joi.string().optional().description(MESSAGE_VALIDATION.GROUP_NAME),
+        .description(JOI_VALIDATION_MESSAGE.USER_ID),
+      groupName: Joi.string().optional().description(JOI_VALIDATION_MESSAGE.GROUP_NAME),
     },
   }),
 
@@ -24,8 +24,8 @@ export = {
     EmptyObject
   >({
     path: {
-      conversationId: Joi.string().required().description(MESSAGE_VALIDATION.CONVERSATION_ID),
-      messageId: Joi.string().required().description(MESSAGE_VALIDATION.MESSAGE_ID),
+      conversationId: Joi.string().required().description(JOI_VALIDATION_MESSAGE.CONVERSATION_ID),
+      messageId: Joi.string().required().description(JOI_VALIDATION_MESSAGE.MESSAGE_ID),
     },
   }),
 };

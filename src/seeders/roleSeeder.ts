@@ -1,6 +1,6 @@
 import { RoleModel } from '@src/database/mysql/models/roleModel';
 import RolesEnum from '@src/enums/rolesEnum';
-import RoleRepository from '@src/repositories/v2/roleRepository';
+import RoleRepository from '@src/repositories/v1/roleRepository';
 
 type RoleSeedData = {
   [key in RolesEnum]: {

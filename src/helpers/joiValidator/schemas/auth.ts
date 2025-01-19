@@ -1,24 +1,24 @@
 import Joi from 'joi';
 
 import { joiValidationRequest } from '@src/helpers/joiValidator/index';
-import { MESSAGE_VALIDATION } from '@src/constants';
-import { UserLoginRequest, UserRegisterRequest } from '@src/types/request/userRequest';
+import { JOI_VALIDATION_MESSAGE } from '@src/constants';
 import EmptyObject from '@src/types/request/emptyObject';
+import { AuthLoginRequest, AuthRegisterRequest } from '@src/types/request/authRequest';
 
 export = {
-  RegisterRequest: joiValidationRequest<EmptyObject, UserRegisterRequest, EmptyObject, EmptyObject>({
+  AuthRegisterRequest: joiValidationRequest<EmptyObject, AuthRegisterRequest, EmptyObject, EmptyObject>({
     body: {
-      firstName: Joi.string().required().description(MESSAGE_VALIDATION.FIST_NAME),
-      lastName: Joi.string().required().description(MESSAGE_VALIDATION.LAST_NAME),
-      email: Joi.string().required().email().description(MESSAGE_VALIDATION.EMAIL),
-      password: Joi.string().required().description(MESSAGE_VALIDATION.PASSWORD),
+      firstName: Joi.string().required().description(JOI_VALIDATION_MESSAGE.FIST_NAME),
+      lastName: Joi.string().required().description(JOI_VALIDATION_MESSAGE.LAST_NAME),
+      email: Joi.string().required().email().description(JOI_VALIDATION_MESSAGE.EMAIL),
+      password: Joi.string().required().description(JOI_VALIDATION_MESSAGE.PASSWORD),
     },
   }),
 
-  LoginRequest: joiValidationRequest<EmptyObject, UserLoginRequest, EmptyObject, EmptyObject>({
+  AuthLoginRequest: joiValidationRequest<EmptyObject, AuthLoginRequest, EmptyObject, EmptyObject>({
     body: {
-      email: Joi.string().required().email().description(MESSAGE_VALIDATION.EMAIL),
-      password: Joi.string().required().description(MESSAGE_VALIDATION.PASSWORD),
+      email: Joi.string().required().email().description(JOI_VALIDATION_MESSAGE.EMAIL),
+      password: Joi.string().required().description(JOI_VALIDATION_MESSAGE.PASSWORD),
     },
   }),
 };

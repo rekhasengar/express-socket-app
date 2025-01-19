@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import StatusCodes from 'http-status-codes';
+import HttpStatusCode from 'http-status-codes';
 import { TypeORMError } from 'typeorm';
 import { AxiosError } from 'axios';
 
@@ -38,19 +38,19 @@ export default class CustomError extends Error {
       res.status(response.status).send(response);
     } catch (error) {
       const errorResponse = new ApiResponse<ErrorResponseBody>();
-      errorResponse.status = StatusCodes.INTERNAL_SERVER_ERROR;
+      errorResponse.status = HttpStatusCode.INTERNAL_SERVER_ERROR;
       errorResponse.message = INTERNAL_SERVER_ERROR;
       errorResponse.body = {
         errors: [{ messages: [SOMETHING_WENT_WRONG] }],
       };
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(errorResponse);
+      res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send(errorResponse);
     }
   }
 
   public static getCustomErrorObject(error: unknown): CustomError {
     const axiosError = error as AxiosError;
     const message = INTERNAL_SERVER_ERROR;
-    const status = StatusCodes.INTERNAL_SERVER_ERROR;
+    const status = HttpStatusCode.INTERNAL_SERVER_ERROR;
 
     let payload: Partial<CustomError> = new CustomError(status, message);
 
@@ -79,5 +79,21 @@ export default class CustomError extends Error {
       payload.message || message,
       payload.errors || [{ messages: [SOMETHING_WENT_WRONG] }],
     );
+  }
+
+  public static getNotFoundError(message: string): CustomError {
+    return new CustomError(HttpStatusCode.NOT_FOUND, message);
+  }
+
+  public static getBadRequestError(message: string): CustomError {
+    return new CustomError(HttpStatusCode.BAD_REQUEST, message);
+  }
+
+  public static getConflictError(message: string): CustomError {
+    return new CustomError(HttpStatusCode.BAD_REQUEST, message);
+  }
+
+  public static getUnauthorizedError(message: string): CustomError {
+    return new CustomError(HttpStatusCode.UNAUTHORIZED, message);
   }
 }

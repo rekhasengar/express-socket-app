@@ -1,3 +1,4 @@
+import { MessageStatusEnum } from '@src/enums/messageStatusEnum';
 import SocketEventEnum from '@src/enums/socketEventEnum';
 import UserStatusEnum from '@src/enums/userStatusEnum';
 
@@ -14,7 +15,7 @@ export type EventRequest =
   | DeleteMessageReceiverEventRequest
   | UserStatusEventRequest
   | AddUsersInGroupEventRequest
-  | UsersAddedInGroupEventRequest
+  | ChatJoinedEventRequest
   | UserLeaveGroupEventRequest
   | UserLeftGroupEventRequest
   | AdminUpdateRoleEventRequest
@@ -27,6 +28,7 @@ export type MessageRequest = {
   id: string;
   message: string;
   timestamp: number;
+  timezone: string;
 };
 
 //client will send to server.
@@ -40,6 +42,15 @@ export type ReceiveMessageEventRequest = {
   senderId: string;
   conversationId: string;
   message: MessageRequest;
+};
+
+export type MessageStatusEventRequest = {
+  conversationId: string;
+  userId: string;
+  messageId: string;
+  status: MessageStatusEnum;
+  timestamp: number;
+  timezone: string;
 };
 
 //client will send to server.
@@ -78,11 +89,9 @@ export type AddUsersInGroupEventRequest = {
   conversationId: string;
   userIds: string[];
 };
-//server will send to client.
-export type UsersAddedInGroupEventRequest = {
-  adminId: string;
+
+export type ChatJoinedEventRequest = {
   conversationId: string;
-  userIds: string[];
 };
 
 //client will send to server.

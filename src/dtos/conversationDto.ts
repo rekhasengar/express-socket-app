@@ -6,16 +6,14 @@ export class CreateConversationDto {
   groupName?: string;
   userIds: Array<string>;
   context: RequestContext;
-  locale: string;
   isGroupChat?: boolean;
 
-  constructor(body: CreateConversationRequest, adminId: string, context: RequestContext, locale: string) {
+  constructor(body: CreateConversationRequest, adminId: string, context: RequestContext) {
     this.adminId = adminId;
     this.userIds = body.userIds;
     this.groupName = body.groupName;
     this.isGroupChat = body.isGroupChat;
     this.context = context;
-    this.locale = locale;
   }
 }
 

@@ -22,6 +22,7 @@ export interface ServerConfig {
   MYSQL_DB_NAME: string;
   MYSQL_DB_USER: string;
   MYSQL_DB_PASSWORD: string;
+  APP_URL: string;
 }
 
 /**
@@ -46,6 +47,7 @@ export const serverConfig: ServerConfig = {
   MYSQL_DB_USER: env.MYSQL_DB_USER || 'root',
   MYSQL_DB_PASSWORD: env.MYSQL_DB_PASSWORD || '',
   MYSQL_DB_NAME: env.MYSQL_DB_NAME || 'local',
+  APP_URL: env.APP_URL || `http://localhost:${env.PORT}`,
 };
 
 export const SUPPORTED_LOCALE = ['en', 'hi'];

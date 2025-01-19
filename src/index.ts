@@ -5,10 +5,10 @@ import fs from 'fs';
 import helmet from 'helmet';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import httpStatusCode from 'http-status-codes';
 
 import { serveSwagger } from '../src/privateLibs/swagger-generator-express';
 import RequestContext from './helpers/context';
-import ResponseHandler from './helpers/responseHandler';
 import { DEFAULT_LOCALE, isProduction, serverConfig, SUPPORTED_LOCALE } from './config';
 import EmailService from './utils/email';
 import { AppDataSource } from './database/mysql/typeormConfig';
@@ -16,7 +16,7 @@ import constants from './constants';
 import CustomError from './shared/errorHandler/customError';
 import SocketConnector from './socket/socketConnector';
 import processRoleSeeder from './seeders/roleSeeder';
-import blockedAt from 'blocked-at';
+// import blockedAt from 'blocked-at';
 
 const app = express();
 
@@ -36,15 +36,15 @@ app.use(express.static('public'));
 
 // This is usually caused by synchronous operations that delay the event loop, such as long loop , disk I/O, or database operations.
 // AsyncHook.init: This is part of the blocked-at package's internal tracking of asynchronous operations.
-blockedAt(
-  (time: any, stack: any, resourceType: any) => {
-    console.log('+++++++++++++++++++++++++++++++++');
-    console.info({ message: `Blocked for ${time}ms` });
-    console.info({ message: `Stack trace:\n${JSON.stringify(stack)}` });
-    console.info({ message: `Resource type: ${JSON.stringify(resourceType)}` });
-  },
-  { threshold: 20 },
-);
+// blockedAt(
+//   (time: any, stack: any, resourceType: any) => {
+//     console.log('+++++++++++++++++++++++++++++++++');
+//     console.info({ message: `Blocked for ${time}ms` });
+//     console.info({ message: `Stack trace:\n${JSON.stringify(stack)}` });
+//     console.info({ message: `Resource type: ${JSON.stringify(resourceType)}` });
+//   },
+//   { threshold: 20 },
+// );
 
 const httpServer = createServer(app);
 
@@ -58,7 +58,6 @@ const io = new Server(httpServer, {
 
 SocketConnector.initialize(io);
 
-const xRequestId = constants.GENERATE_UUID_V4();
 (async () => {
   try {
     await AppDataSource.initialize();
@@ -69,7 +68,6 @@ const xRequestId = constants.GENERATE_UUID_V4();
       message: constants.MY_SQL_UNABLE_TO_CONNECT,
       error: error,
       source: '#serverFile',
-      requestId: xRequestId,
     });
   }
 })();
@@ -111,7 +109,7 @@ const swaggerOptions = {
 const port = serverConfig.port;
 
 // Middleware to initialize request context
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((req: Request, _res: Response, next: NextFunction) => {
   req.context = new RequestContext(req);
   let locale =
     (req.headers['Accept-Language'] as string) || (req.headers['accept-language'] as string) || DEFAULT_LOCALE;
@@ -120,14 +118,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-app.get('/health', function (req: Request, res: Response) {
-  req.context.logInfo({
-    message: 'Health check completed',
-    source: 'heath',
-    action: 'healthcheck',
-  });
-  const response = new ResponseHandler(req, res);
-  return response.successResponse('okay');
+app.get('/', (_req: Request, res: Response) => {
+  return res.status(httpStatusCode.OK).send({ message: constants.SERVER_WELCOME_MESSAGE });
 });
 
 /**
@@ -142,19 +134,6 @@ fs.readdirSync(path.resolve(__dirname, 'routes', 'v1')).forEach((file) => {
   }
 });
 
-/**
- * ----------------------------- Start of V2 APIs ------------------------
- */
-
-fs.readdirSync(path.resolve(__dirname, 'routes', 'v2')).forEach((file) => {
-  if (!file.includes('.js.') && !file.includes('.ts.') && !file.includes('.d.ts')) {
-    console.log(file);
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { router, basePath } = require(`./routes/v2/${file}`);
-    app.use(basePath, router);
-  }
-});
-
 const server = httpServer.listen(port, () => {
   console.info(`Started on port : ${port}`);
 });
@@ -165,22 +144,14 @@ serveSwagger(app, '/swagger', swaggerOptions, {
   responseModelPath: '../../responseModels',
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.get('*', function (req: Request, res: Response, _next: NextFunction) {
-  const response = new ResponseHandler(req, res);
-  return response.notFoundError('APIs route not found', 'RequestNotFound');
+app.get('*', (_req: Request, res: Response, _next: NextFunction) => {
+  return res.status(httpStatusCode.NOT_FOUND).send(constants.ROUTE_NOT_FOUND);
 });
 
 // error handler middleware
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use(function (err: Error, req: Request, res: Response, _next: NextFunction) {
-  if (err instanceof CustomError) {
-    return CustomError.errorHandler(err, res);
-  }
-  let locale = (req.headers['Accept-Language'] as string) || DEFAULT_LOCALE;
-  locale = SUPPORTED_LOCALE.includes(locale) ? locale : DEFAULT_LOCALE;
-  const response = new ResponseHandler(req, res);
-  return response.handleError(locale, err);
+  const customError = CustomError.getCustomErrorObject(err);
+  return CustomError.errorHandler(customError, res);
 });
 
 module.exports = server;

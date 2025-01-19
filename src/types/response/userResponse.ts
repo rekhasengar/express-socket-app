@@ -1,16 +1,7 @@
 import { UserModel } from '@src/database/mysql/models/userModel';
 import UserStatusEnum from '@src/enums/userStatusEnum';
 
-export type AuthResponse = {
-  message: string;
-};
-
-export type UserLoginResponse = {
-  token: string;
-  message: string;
-};
-
-export type GetActiveUsersResponse = {
+export type GetAllUsersResponse = {
   users: Array<UserModel>;
 };
 
@@ -21,4 +12,16 @@ export type UserStatusResponse = {
 
 export type GetUserStatusResponse = {
   status: Array<UserStatusResponse>;
+};
+
+export type GetUserResponse = {
+  message: string;
+};
+
+export type UpdateUserResponse = {
+  message: string;
+};
+
+export type DeleteUserResponse = {
+  message: string;
 };

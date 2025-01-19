@@ -1,8 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { ConversationModel } from './conversationModel';
 import { ModelTemplate } from './modelTemplate';
 import { UserModel } from './userModel';
+import { MessageStatusModel } from './messageStatusModel';
 
 @Entity({ name: 'messages' })
 export class MessageModel extends ModelTemplate {
@@ -22,4 +23,7 @@ export class MessageModel extends ModelTemplate {
 
   @Column('int', { name: 'conversationKey' })
   public conversationKey: number;
+
+  @OneToMany(() => MessageStatusModel, (messageStatus) => messageStatus.message)
+  public messageStatuses: MessageStatusModel[];
 }

@@ -1,19 +1,36 @@
-'use-strict';
+import { Router } from 'express';
 
-import express from 'express';
+import { PathParams, ResponseBody, RequestBody, QueryParams } from '@src/shared/types/customExpressRequest';
+import {
+  DeleteUserResponse,
+  GetAllUsersResponse,
+  GetUserResponse,
+  UpdateUserResponse,
+} from '@src/types/response/userResponse';
+import UserController from '@src/controllers/v1/userController';
+import { API_ROUTE } from '@src/constants';
+import { UserUpdateRequest } from '@src/types/request/userRequest';
 
-import { checkToken } from '@src/middlewares/checkToken';
-import { validation } from '../../privateLibs/swagger-generator-express';
-import UserController from '../../controllers/v1/user';
-import userRequestModel from '../../requestModels/user';
+const userRoute = Router();
+const userController = new UserController();
 
-const { getUsers, getUser, updateUser, deleteUser } = new UserController();
+userRoute.get<PathParams, ResponseBody<GetAllUsersResponse>, RequestBody, QueryParams>('/', (...args): void => {
+  userController.getAllUsers(...args);
+});
 
-const router = express.Router();
+userRoute.put<PathParams, ResponseBody<UpdateUserResponse>, RequestBody<UserUpdateRequest>, QueryParams>(
+  '/',
+  (...args): void => {
+    userController.updateUser(...args);
+  },
+);
 
-router.get('/', validation(userRequestModel[0]), checkToken, getUsers);
-router.put('/:userId', validation(userRequestModel[1]), checkToken, updateUser);
-router.get('/:userId', validation(userRequestModel[2]), checkToken, getUser);
-router.delete('/:userId', validation(userRequestModel[3]), checkToken, deleteUser);
+userRoute.get<PathParams, ResponseBody<GetUserResponse>, RequestBody, QueryParams>('/singleUser', (...args): void => {
+  userController.getUser(...args);
+});
 
-module.exports = { router, basePath: '/api/v1/users' };
+userRoute.delete<PathParams, ResponseBody<DeleteUserResponse>, RequestBody, QueryParams>('/', (...args): void => {
+  userController.deleteUser(...args);
+});
+
+module.exports = { router: userRoute, basePath: API_ROUTE.USERS };

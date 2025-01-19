@@ -1,20 +1,5 @@
-export type UserRegisterRequest = {
+export type UserUpdateRequest = {
   firstName: string;
   lastName: string;
   email: string;
-  password: string;
-};
-
-export type UserLoginRequest = {
-  email: string;
-  password: string;
-};
-
-export type UserLogoutPathRequest = {
-  userId: string;
-};
-
-export type GetCurrentUsersQueryParamRequest = {
-  page?: number;
-  limit?: number;
 };

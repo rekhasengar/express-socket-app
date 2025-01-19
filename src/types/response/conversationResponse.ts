@@ -8,4 +8,3 @@ export type ConversationResponse<T = any> = {
 export type GetConversationsResponse = {
   conversations: Array<ConversationModel>;
 };
-

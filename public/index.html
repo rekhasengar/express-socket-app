@@ -61,143 +61,150 @@
     <div id="messageContainer"></div>
 
     <script>
-      // Retrieve the token from localStorage
-      const token = localStorage.getItem('authToken');
+      let userId;
+      let userEmail;
 
-      if (!token) {
-        alert('You are not authenticated. Redirecting to login page.');
-        window.location.href = '/login.html';
-      } else {
+      function _checkToken() {
+        // Retrieve the token from localStorage
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          alert('You are not authenticated. Redirecting to login page.');
+          window.location.href = '/login.html';
+        }
+      }
+
+      function _decodeTokenAndDisplayEmail(token) {
         try {
-          // Decode the token to extract user details
+          //Decoding user auth token.
           const decodedToken = jwt_decode(token);
-          const userEmail = decodedToken.email; // Assumes token has an 'email' field
-          const emailDisplay = document.getElementById('userEmail');
+          userEmail = decodedToken.email;
+          userId = decodedToken.id;
 
+          const emailDisplay = document.getElementById('userEmail');
           if (userEmail) {
             emailDisplay.textContent = `Logged in as: ${userEmail}`;
           } else {
             emailDisplay.textContent = 'Email not found in token.';
           }
         } catch (error) {
-          console.error('Error decoding token:', error);
           alert('Invalid token. Redirecting to login page.');
           window.location.href = '/login.html';
         }
+      }
 
-        // Connect to the backend using the token
-        const socket = io('http://localhost:3000', {
-          auth: {
-            token: token,
-          },
-        });
+      function displayMessage(messageText, type) {
+        const messageContainer = document.getElementById('messageContainer');
+        const messageWrapper = document.createElement('div');
+        const messageElement = document.createElement('div');
 
-        socket.on('connected', () => {
-          console.log('Connected successfully!');
-        });
+        // Apply styles for received/sent messages
+        messageElement.classList.add('message', type);
 
-        // Handle user going offline (tab or window close)
-        window.addEventListener('beforeunload', () => {
-          if (socket && socket.connected) {
-            socket.emit('inactiveUser', { socketId: socket.id });
-            console.log('User inactive event sent to the server:', { socketId: socket.id });
-          }
-        });
+        messageElement.textContent = messageText;
+        messageWrapper.appendChild(messageElement);
+        messageContainer.appendChild(messageWrapper);
 
-        // Listen for a message from the server
-        socket.on('receiveMessage', (data) => {
-          console.log('Received message from backend:', data.message.message);
-          displayMessage(data.message.message, 'received');
-        });
+        // Scroll to the bottom of the container
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+      }
 
-        socket.on('userStatus', (data) => {
-          console.log('Received status update:', data.message.message);
-          displayMessage(data.message.message, 'received');
-        });
+      // Connect to the backend using the token
+      const socket = io('http://localhost:3000', {
+        auth: {
+          token: token,
+        },
+      });
 
-        socket.on('joinChat', (data) => {
-          console.log('Received group update:', data.message.message);
-          displayMessage(data.message.message, 'received');
-        });
+      socket.on('connected', () => {
+        console.log('Connected successfully!');
+      });
 
-        socket.on('renameGroup', (data) => {
-          console.log('Received group update:', data.message.message);
-          displayMessage(data.message.message, 'received');
-        });
+      // Listen for a message from the server
+      socket.on('receiveMessage', (data) => {
+        console.log('Message received from backend successfully, message: ', data.message.message);
+        const messageStatusPayload = {
+          conversationId: data.conversationId,
+          userId: userId,
+          messageId: data.message.id,
+          status: 'delivered',
+          timestamp: new Date().getTime(),
+          timezone: 'Asia/Kolkata',
+        };
+        socket.emit('messageStatus', payload);
+        displayMessage(data.message.message, 'received');
+      });
 
-        socket.on('updateUserRoleInGroup', (data) => {
-          console.log('Received group update:', data.message.message);
-          displayMessage(data.message.message, 'received');
-        });
+      socket.on('messageStatus', (data) => {
+        console.log('Message status event received successfully, data: ', data.message.message);
+      });
 
-        socket.on('socketError', (data) => {
-          console.log('Error occurred: ', data);
-        });
+      socket.on('deleteMessage', (data) => {
+        console.log('Message deleted event received successfully, data: ', data.message.message);
+      });
 
-        function displayMessage(messageText, type) {
-          const messageContainer = document.getElementById('messageContainer');
-          const messageWrapper = document.createElement('div');
-          const messageElement = document.createElement('div');
+      socket.on('userStatus', (data) => {
+        console.log('User status event received successfully, data: ', data);
+      });
 
-          // Apply styles for received/sent messages
-          messageElement.classList.add('message', type);
+      socket.on('joinChat', (data) => {
+        console.log('Join chat event received successfully, data: ', data);
+      });
 
-          messageElement.textContent = messageText;
-          messageWrapper.appendChild(messageElement);
-          messageContainer.appendChild(messageWrapper);
+      socket.on('removeUserFromGroup', (data) => {
+        console.log('User removed from group event received successfully, data: ', data);
+      });
 
-          // Scroll to the bottom of the container
-          messageContainer.scrollTop = messageContainer.scrollHeight;
+      socket.on('addUserInGroup', (data) => {
+        console.log('Add user in group event received successfully, data: ', data);
+      });
+
+      socket.on('leaveGroup', (data) => {
+        console.log('Leave group event received successfully, data: ', data.message.message);
+      });
+
+      socket.on('renameGroup', (data) => {
+        console.log('Renamed group event received successfully, data: ', data.message.message);
+      });
+
+      socket.on('updateUserRoleInGroup', (data) => {
+        console.log('Update user role in group event received successfully, data: ', data.message.message);
+      });
+
+      socket.on('socketError', (data) => {
+        console.log('Socket error event received successfully, data: ', data.message.message);
+      });
+
+      // Send a message to the server
+      document.getElementById('sendMessageButton').addEventListener('click', () => {
+        const messageInput = document.getElementById('messageInput');
+        const messageText = messageInput.value.trim();
+        if (messageText === '') {
+          alert('Message cannot be empty!');
+          return;
         }
 
-        // Send a message to the server
-        document.getElementById('sendMessageButton').addEventListener('click', () => {
-          const messageInput = document.getElementById('messageInput');
-          const messageText = messageInput.value.trim();
-          if (messageText === '') {
-            alert('Message cannot be empty!');
-            return;
-          }
-
-          const uuid = crypto.randomUUID();
-          const decodedToken = jwt_decode(token);
-          const userId = decodedToken.id;
-          const payload = {
-            // eventType: 'updateUserRoleInGroup',
-            // socketId: socket.id,
-            // data: {
-            //   conversationId: '7e989195-3742-4f39-adf5-56b5508b4a18',
-            //   senderId: userId,
-            //   message: {
-            //     id: uuid,
-            //     message: messageText,
-            //     timestamp: new Date().getTime(),
-            //   },
-            // },
-            eventType: 'addUserInGroup',
-            socketId: socket.id,
-            data: {
-              adminId: userId,
-              userId: ['e2c0e0fa-15f9-43e5-8496-3bdb8eb72557'],
-              conversationId: '7e989195-3742-4f39-adf5-56b5508b4a18',
+        const uuid = crypto.randomUUID();
+        const decodedToken = jwt_decode(token);
+        const userId = decodedToken.id;
+        const payload = {
+          eventType: 'sendMessage',
+          socketId: socket.id,
+          data: {
+            conversationId: '7e989195-3742-4f39-adf5-56b5508b4a18',
+            senderId: userId,
+            message: {
+              id: uuid,
+              message: messageText,
+              timestamp: new Date().getTime(),
             },
-          };
+          },
+        };
 
-          socket.emit('event', payload);
-          displayMessage(messageText, 'sent'); // Display the message immediately
-          console.log('Message sent successfully!');
-          messageInput.value = ''; // Clear the input after sending the message
-          socket.on('errorEvent', (error) => {
-            console.error('Error received from server:', error);
-
-            // Handle the error (e.g., display to the user)
-            alert(`Error: ${error.message} (Status: ${error.status})`);
-            if (error.stack) {
-              console.log('Stack Trace:', error.stack);
-            }
-          });
-        });
-      }
+        socket.emit('event', payload);
+        displayMessage(messageText, 'sent'); // Display the message immediately
+        console.log('Message sent successfully!');
+        messageInput.value = ''; // Clear the input after sending the message
+      });
     </script>
   </body>
 </html>
