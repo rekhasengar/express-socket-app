@@ -14,18 +14,6 @@ export default class MessageRepository {
     return await this._messageModel.save(messageModel);
   }
 
-  public async deleteSingleMessage(senderId: string, messageId: string, conversationId: string): Promise<void> {
-    await this._messageModel.delete({
-      id: messageId,
-      sender: {
-        id: senderId,
-      },
-      conversation: {
-        id: conversationId,
-      },
-    });
-  }
-
   public async getMessagesByConversationId(
     conversationId: string,
     page: number,

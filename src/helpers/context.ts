@@ -1,6 +1,7 @@
 import { Request } from 'express';
 import logger from '@mindpath/logger';
 import { v4 as uuid } from 'uuid';
+
 import { LogDetails, LogLabels } from '@src/types/context';
 
 export default class RequestContext {

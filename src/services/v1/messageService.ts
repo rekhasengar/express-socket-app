@@ -1,11 +1,11 @@
 import { MessageModel } from '@src/database/mysql/models/messageModel';
 import MessageRepository from '@src/repositories/v1/messageRepository';
 import { MessageRequest } from '@src/types/request/socketRequest';
-import { MessageResponse, UserMessagesResponse } from '@src/types/response/messageResponse';
 import { CONVERSATION_MESSAGES } from '@src/constants/messages';
 import MessageDto from '@src/dtos/messageDto';
 import { LOGS } from '@src/constants';
 import CustomError from '@src/shared/errorHandler/customError';
+import { GetConversationMessageResponse, UserMessagesResponse } from '@src/types/response/conversationResponse';
 
 export default class MessageService {
   private readonly _messageRepository: MessageRepository;
@@ -28,11 +28,7 @@ export default class MessageService {
     return await this._messageRepository.saveMessage(messageModel);
   }
 
-  public async deleteSingleMessage(senderId: string, messageId: string, conversationId: string): Promise<void> {
-    await this._messageRepository.deleteSingleMessage(senderId, messageId, conversationId);
-  }
-
-  public async getUserMessage(messageDto: MessageDto): Promise<MessageResponse> {
+  public async getUserMessage(messageDto: MessageDto): Promise<GetConversationMessageResponse> {
     const { conversationId, page, limit, context } = messageDto;
 
     const { messages, totalMessageCount } = await this._messageRepository.getMessagesByConversationId(

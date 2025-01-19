@@ -6,7 +6,7 @@ export type LogDetails = {
   method: string;
   url: string;
   data?: string;
-  ip: string;
+  ip?: string;
 };
 
 export type LogLabels = {

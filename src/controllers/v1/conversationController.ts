@@ -3,23 +3,28 @@ import HttpStatusCode from 'http-status-codes';
 
 import { ApiResponse } from '@src/shared/errorHandler/apiResponse';
 import CustomRequest from '@src/shared/types/customExpressRequest';
-import { ConversationResponse, GetConversationsResponse } from '@src/types/response/conversationResponse';
+import {
+  ConversationResponse,
+  GetConversationMessageResponse,
+  GetConversationsResponse,
+} from '@src/types/response/conversationResponse';
 import { CONTROLLER_MESSAGE } from '@src/constants/messages';
 import CustomError from '@src/shared/errorHandler/customError';
 import ConversationService from '@service/v1/conversationService';
-import { CreateConversationRequest, DeleteConversationMessagePathParams } from '@src/types/request/conversationRequest';
-import {
-  CreateConversationDto,
-  DeleteConversationMessageDto,
-  GetConversationMessageDto,
-} from '@src/dtos/conversationDto';
+import { CreateConversationRequest } from '@src/types/request/conversationRequest';
+import { CreateConversationDto, GetConversationMessageDto } from '@src/dtos/conversationDto';
 import EmptyObject from '@src/types/request/emptyObject';
+import { MessagePathRequest, MessageQueryRequest } from '@src/types/request/messageRequest';
+import MessageDto from '@src/dtos/messageDto';
+import MessageService from '@service/v1/messageService';
 
 export default class ConversationController {
   private readonly _conversationService: ConversationService;
+  private readonly _messageService: MessageService;
 
   constructor() {
     this._conversationService = new ConversationService();
+    this._messageService = new MessageService();
   }
 
   public async createNewConversation(
@@ -42,26 +47,6 @@ export default class ConversationController {
     }
   }
 
-  public async deleteConversationMessage(
-    req: CustomRequest<DeleteConversationMessagePathParams, ConversationResponse, EmptyObject, EmptyObject>,
-    res: Response<ApiResponse<ConversationResponse>>,
-    next: NextFunction,
-  ): Promise<void> {
-    const response = new ApiResponse<ConversationResponse>();
-
-    try {
-      const deleteConversationDto = new DeleteConversationMessageDto(req.params, req.app.locals.userId, req.context);
-      const responseFromService = await this._conversationService.deleteConversationMessage(deleteConversationDto);
-      response.status = HttpStatusCode.OK;
-      response.message = CONTROLLER_MESSAGE.SUCCESS;
-      response.body = responseFromService;
-      res.status(response.status).send(response);
-    } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
-      return next(customError);
-    }
-  }
-
   public async getConversations(
     req: CustomRequest<EmptyObject, GetConversationsResponse, EmptyObject, EmptyObject>,
     res: Response<ApiResponse<GetConversationsResponse>>,
@@ -72,6 +57,25 @@ export default class ConversationController {
     try {
       const getConversationMessageDto = new GetConversationMessageDto(req.app.locals.userId, req.context, req.locale);
       const responseFromService = await this._conversationService.getConversations(getConversationMessageDto);
+      response.status = HttpStatusCode.OK;
+      response.message = CONTROLLER_MESSAGE.SUCCESS;
+      response.body = responseFromService;
+      res.status(response.status).send(response);
+    } catch (error) {
+      const customError = CustomError.getCustomErrorObject(error);
+      return next(customError);
+    }
+  }
+
+  public async getUserMessages(
+    req: CustomRequest<MessagePathRequest, GetConversationMessageResponse, EmptyObject, MessageQueryRequest>,
+    res: Response<ApiResponse<GetConversationMessageResponse>>,
+    next: NextFunction,
+  ): Promise<void> {
+    const response = new ApiResponse<GetConversationMessageResponse>();
+    try {
+      const messageDto = new MessageDto(req.params, req.query, req.context);
+      const responseFromService = await this._messageService.getUserMessage(messageDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

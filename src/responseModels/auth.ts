@@ -1,5 +1,5 @@
 export = {
-  SignUpRequest: {
+  RegisterRequest: {
     200: {
       body: {
         type: 'object',
@@ -13,22 +13,13 @@ export = {
         },
       },
     },
-    409: {
-      body: {
-        type: 'object',
-        example: {
-          message: 'Password and confirm password is not same',
-          code: 'PASSWORD_MISMATCHED',
-        },
-      },
-    },
   },
-  SignInRequest: {
+  LoginRequest: {
     200: {
       body: {
         type: 'object',
         example: {
-          authToken: 'eyJhbGciOiJIUzI1NiJ9.eyJOYW1lIjoiUml0aWsgSmFpbiJ9.OENs7sVbpa5BpVH0LkqH5V0uuqwsfizV2u1Psa_G6R0',
+          toke: 'eyJhbGciOiJIUzI1NiJ9.eyJOYW1lIjoiUml0aWsgSmFpbiJ9.OENs7sVbpa5BpVH0LkqH5V0uuqwsfizV2u1Psa_G6R0',
         },
       },
     },

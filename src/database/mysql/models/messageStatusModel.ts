@@ -3,7 +3,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { ModelTemplate } from './modelTemplate';
 import { UserModel } from './userModel';
 import { MessageModel } from './messageModel';
-import { MessageStatusEnum } from '@src/enums/messageStatusEnum';
+import { MessageStatusEnum } from '../../../enums/messageStatusEnum';
 
 @Entity({ name: 'messageStatuses' })
 export class MessageStatusModel extends ModelTemplate {

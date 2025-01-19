@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
@@ -6,8 +6,8 @@ import helmet from 'helmet';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import httpStatusCode from 'http-status-codes';
+import swagger from 'express-joi-swagger-spec';
 
-import { serveSwagger } from '../src/privateLibs/swagger-generator-express';
 import RequestContext from './helpers/context';
 import { DEFAULT_LOCALE, isProduction, serverConfig, SUPPORTED_LOCALE } from './config';
 import EmailService from './utils/email';
@@ -106,7 +106,7 @@ const swaggerOptions = {
   defaultSecurity: 'Bearer',
 };
 
-const port = serverConfig.port;
+const port = serverConfig.port || constants.PORT;
 
 // Middleware to initialize request context
 app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -118,8 +118,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-app.get('/', (_req: Request, res: Response) => {
-  return res.status(httpStatusCode.OK).send({ message: constants.SERVER_WELCOME_MESSAGE });
+app.get('/', (_req: Request, res: Response, _next: NextFunction) => {
+  res.status(httpStatusCode.OK).send({ message: constants.SERVER_WELCOME_MESSAGE });
 });
 
 /**
@@ -138,14 +138,21 @@ const server = httpServer.listen(port, () => {
   console.info(`Started on port : ${port}`);
 });
 
-serveSwagger(app, '/swagger', swaggerOptions, {
-  routePath: '../../routes/v1',
-  requestModelPath: '../../requestModels',
-  responseModelPath: '../../responseModels',
+// serveSwagger(app, '/swagger', swaggerOptions, {
+//   routePath: '../../routes/v1',
+//   requestModelPath: '../../requestModels',
+//   responseModelPath: '../../responseModels',
+// });
+
+swagger.serveSwagger(app, '/swagger', swaggerOptions, {
+  projectRoothPath: __dirname,
+  routeFolderName: 'routes',
+  requestModelFolderName: 'requestModels',
+  responseModelFolderName: 'responseModels',
 });
 
 app.get('*', (_req: Request, res: Response, _next: NextFunction) => {
-  return res.status(httpStatusCode.NOT_FOUND).send(constants.ROUTE_NOT_FOUND);
+  res.status(httpStatusCode.NOT_FOUND).send(constants.ROUTE_NOT_FOUND);
 });
 
 // error handler middleware

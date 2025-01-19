@@ -3,14 +3,9 @@ import UserService from './userService';
 import { ConversationResponse, GetConversationsResponse } from '@src/types/response/conversationResponse';
 import ConversationRepository from '@src/repositories/v1/conversationRepository';
 import { ConversationModel } from '@src/database/mysql/models/conversationModel';
-import {
-  CreateConversationDto,
-  DeleteConversationMessageDto,
-  GetConversationMessageDto,
-} from '@src/dtos/conversationDto';
+import { CreateConversationDto, GetConversationMessageDto } from '@src/dtos/conversationDto';
 import ConversationMemberService from './conversationMemberService';
 import { ConversationMemberModel } from '@src/database/mysql/models/conversationMemberModel';
-import MessageService from './messageService';
 import { UserModel } from '@src/database/mysql/models/userModel';
 import { getRoleKeyByName } from '@src/seeders/roleSeeder';
 import RolesEnum from '@src/enums/rolesEnum';
@@ -22,13 +17,11 @@ export default class ConversationService {
   private readonly _userService: UserService;
   private readonly _conversationRepository: ConversationRepository;
   private readonly _conversationMemberService: ConversationMemberService;
-  private readonly _messageService: MessageService;
 
   constructor() {
     this._userService = new UserService();
     this._conversationRepository = new ConversationRepository();
     this._conversationMemberService = new ConversationMemberService();
-    this._messageService = new MessageService();
   }
 
   public async getConversationByConversationId(
@@ -81,21 +74,6 @@ export default class ConversationService {
     };
   }
 
-  public async deleteConversationMessage(
-    deleteConversationDto: DeleteConversationMessageDto,
-  ): Promise<ConversationResponse> {
-    const { userId, messageId, conversationId, context } = deleteConversationDto;
-    await this._messageService.deleteSingleMessage(userId, messageId, conversationId);
-
-    context.logInfo({
-      source: LOGS.GET_SOURCE(ConversationService.name, this.createNewConversation.name),
-      message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_DELETED_SUCCESSFULLY,
-    });
-
-    return {
-      message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_DELETED_SUCCESSFULLY,
-    };
-  }
   public async getConversations(
     getConversationMessageDto: GetConversationMessageDto,
   ): Promise<GetConversationsResponse> {

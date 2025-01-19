@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export default {
+  PORT: 3000,
   GENERATE_UUID_V4: (): string => uuidv4(),
   SERVER_WELCOME_MESSAGE: 'Hello ChatApp',
   ROUTE_NOT_FOUND: 'Route not found',
@@ -13,7 +14,6 @@ export const API_ROUTE = {
   CONVERSATIONS: '/api/v2/conversations',
   ROLES: '/api/v2/roles',
   USERS: '/api/v2/users',
-  MESSAGES: '/api/v2/message',
 };
 
 export const USER_CHAT_TYPE = {
@@ -33,6 +33,9 @@ export const JOI_VALIDATION_MESSAGE = {
   MESSAGE_ID: 'Message id required.',
   ROLE_DESCRIPTION: 'Role description required.',
   ROLE: 'Role required.',
+  TOKEN: 'Token required.',
+  NEW_PASSWORD: 'New password required.',
+  OLD_PASSWORD: 'Old password required.',
 };
 
 export const LOGS = {

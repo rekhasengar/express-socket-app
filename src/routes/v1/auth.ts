@@ -13,12 +13,15 @@ import {
   AuthRegisterRequest,
   AuthResetPasswordRequest,
 } from '@src/types/request/authRequest';
+import { validation } from '../../privateLibs/swagger-generator-express';
+import authRequestModel from '../../requestModels/auth';
 
 const authRoute = Router();
 const authController = new AuthController();
 
 authRoute.post<PathParams, AuthResponse, AuthRegisterRequest, QueryParams>(
   '/register',
+  validation(authRequestModel[0]),
   doValidation(AuthSchema.AuthRegisterRequest),
   (...args) => {
     authController.authRegister(...args);
@@ -27,6 +30,7 @@ authRoute.post<PathParams, AuthResponse, AuthRegisterRequest, QueryParams>(
 
 authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthLoginRequest>, QueryParams>(
   '/login',
+  validation(authRequestModel[1]),
   doValidation(AuthSchema.AuthLoginRequest),
   (...args) => {
     authController.authLogin(...args);
@@ -37,13 +41,15 @@ authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody, QueryParams>
   authController.authLogout(...args);
 });
 
-//refactor-apis
 authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody, QueryParams>('/password-forgot', (...args) => {
   authController.authForgotPassword(...args);
 });
 
 authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthResetPasswordRequest>, QueryParams>(
   '/password-reset',
+  validation(authRequestModel[2]),
+  doValidation(AuthSchema.AuthResetPasswordRequest),
+
   (...args) => {
     authController.authResetPassword(...args);
   },
@@ -52,6 +58,8 @@ authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthResetPass
 authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthChangePasswordRequest>, QueryParams>(
   '/password-change',
   checkToken,
+  validation(authRequestModel[3]),
+  doValidation(AuthSchema.AuthChangedPasswordRequest),
   (...args) => {
     authController.authChangePassword(...args);
   },
