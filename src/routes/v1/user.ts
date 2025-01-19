@@ -12,6 +12,8 @@ import { API_ROUTE } from '@src/constants';
 import { UserUpdateRequest } from '@src/types/request/userRequest';
 import userRequestModel from '../../requestModels/user';
 import { validation } from '@src/privateLibs/swagger-generator-express';
+import { doValidation } from '@src/helpers/joiValidator';
+import UserSchema from '../../helpers/joiValidator/schemas/user';
 
 const userRoute = Router();
 const userController = new UserController();
@@ -23,6 +25,7 @@ userRoute.get<PathParams, ResponseBody<GetAllUsersResponse>, RequestBody, QueryP
 userRoute.put<PathParams, ResponseBody<UpdateUserResponse>, RequestBody<UserUpdateRequest>, QueryParams>(
   '/',
   validation(userRequestModel[0]),
+  doValidation(UserSchema.UpdateUserRequest),
   (...args): void => {
     userController.updateUser(...args);
   },

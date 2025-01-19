@@ -14,7 +14,7 @@ export = {
   1: {
     path: {
       page: Joi.number().optional(),
-      limit: Joi.number().required(),
+      limit: Joi.number().optional(),
     },
     query: {
       conversationId: Joi.string().required(),

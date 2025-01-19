@@ -49,7 +49,6 @@ authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthResetPass
   '/password-reset',
   validation(authRequestModel[2]),
   doValidation(AuthSchema.AuthResetPasswordRequest),
-
   (...args) => {
     authController.authResetPassword(...args);
   },
