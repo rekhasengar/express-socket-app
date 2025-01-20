@@ -1,10 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-// import helmet from 'helmet';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import httpStatusCode from 'http-status-codes';
 import swagger from 'express-joi-swagger-spec';
+// import blockedAt from 'blocked-at';
 
 import RequestContext from './helpers/context';
 import { DEFAULT_LOCALE, isProduction, serverConfig, SUPPORTED_LOCALE } from './config';
@@ -15,7 +15,6 @@ import CustomError from './shared/errorHandler/customError';
 import SocketConnector from './socket/socketConnector';
 import processRoleSeeder from './seeders/roleSeeder';
 import v1Router from './routes/v1';
-// import blockedAt from 'blocked-at';
 
 const app = express();
 
@@ -24,14 +23,13 @@ if (!isProduction) {
 }
 
 app.use(cors());
+//facing issue - Content-Security-Policy that why i am hiding the helmet yet
 // app.use(helmet());
 
 // request payload middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-
-//app.use(useragent.express());
 
 // This is usually caused by synchronous operations that delay the event loop, such as long loop , disk I/O, or database operations.
 // AsyncHook.init: This is part of the blocked-at package's internal tracking of asynchronous operations.
@@ -126,12 +124,6 @@ app.use('/api', v1Router);
 const server = httpServer.listen(port, () => {
   console.info(`Started on port : ${port}`);
 });
-
-// serveSwagger(app, '/swagger', swaggerOptions, {
-//   routePath: '../../routes/v1',
-//   requestModelPath: '../../requestModels',
-//   responseModelPath: '../../responseModels',
-// });
 
 swagger.serveSwagger(app, '/swagger', swaggerOptions, {
   projectRoothPath: __dirname,
