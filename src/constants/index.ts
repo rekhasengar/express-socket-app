@@ -9,11 +9,11 @@ export default {
   MY_SQL_UNABLE_TO_CONNECT: 'Unable to  connection with mysql database',
 };
 
-export const API_ROUTE = {
-  AUTH: '/api/v2/auth',
-  CONVERSATIONS: '/api/v2/conversations',
-  ROLES: '/api/v2/roles',
-  USERS: '/api/v2/users',
+export const API_ROUTES = {
+  AUTH: 'auth',
+  CONVERSATIONS: 'conversations',
+  ROLES: 'roles',
+  USERS: 'users',
 };
 
 export const USER_CHAT_TYPE = {

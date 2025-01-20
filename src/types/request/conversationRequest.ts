@@ -14,3 +14,7 @@ export type DeleteConversationMessagePathParams = {
   conversationId: string;
   messageId: string;
 };
+
+export type GetConversationPathParams = {
+  conversationId: string;
+};

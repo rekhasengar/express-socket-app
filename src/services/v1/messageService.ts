@@ -4,8 +4,7 @@ import { MessageRequest } from '@src/types/request/socketRequest';
 import { CONVERSATION_MESSAGES } from '@src/constants/messages';
 import MessageDto from '@src/dtos/messageDto';
 import { LOGS } from '@src/constants';
-import CustomError from '@src/shared/errorHandler/customError';
-import { GetConversationMessageResponse, UserMessagesResponse } from '@src/types/response/conversationResponse';
+import { GetConversationMessagesResponse } from '@src/types/response/conversationResponse';
 
 export default class MessageService {
   private readonly _messageRepository: MessageRepository;
@@ -28,38 +27,25 @@ export default class MessageService {
     return await this._messageRepository.saveMessage(messageModel);
   }
 
-  public async getUserMessage(messageDto: MessageDto): Promise<GetConversationMessageResponse> {
+  public async getUserMessagesByConversationId(messageDto: MessageDto): Promise<GetConversationMessagesResponse> {
     const { conversationId, page, limit, context } = messageDto;
 
-    const { messages, totalMessageCount } = await this._messageRepository.getMessagesByConversationId(
+    const { messages, totalCount } = await this._messageRepository.getMessagesByConversationId(
       conversationId,
       page,
       limit,
-      ['conversation'],
     );
-    if (!messages) {
-      throw CustomError.getNotFoundError(CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_DOES_NOT_EXIST);
-    }
-
-    const userMessageResponse: Array<UserMessagesResponse> = new Array<UserMessagesResponse>();
-    for (const message of messages) {
-      userMessageResponse.push({
-        senderKey: message.senderKey,
-        message: message.message || 'text empty',
-        createAt: message.createAt,
-      });
-    }
 
     context.logInfo({
-      source: LOGS.GET_SOURCE(MessageService.name, this.getUserMessage.name),
+      source: LOGS.GET_SOURCE(MessageService.name, this.getUserMessagesByConversationId.name),
       message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_FETCHED_SUCCESSFULLY,
     });
 
     return {
-      message: userMessageResponse,
+      messages,
       metaData: {
-        totalMessageCount: totalMessageCount,
-        messagePerPage: userMessageResponse.length,
+        totalMessageCount: totalCount,
+        messagePerPage: messages.length,
       },
     };
   }
@@ -76,5 +62,9 @@ export default class MessageService {
       userId,
       relations,
     );
+  }
+
+  public async deleteUserMessageByMessageId(messageId: string): Promise<void> {
+    await this._messageRepository.deleteUserMessageByMessageId(messageId);
   }
 }

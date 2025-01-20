@@ -4,8 +4,8 @@ export type GetAllUsersResponse = {
   users: Array<UserModel>;
 };
 
-export type GetUserResponse = {
-  message: string;
+export type GetSingleUserResponse = {
+  user: UserModel;
 };
 
 export type UpdateUserResponse = {

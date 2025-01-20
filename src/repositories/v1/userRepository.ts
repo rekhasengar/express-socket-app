@@ -103,45 +103,11 @@ export default class UserRepository {
     });
   }
 
-  public async getUserIdBySocketId(socketId: string, relations?: Array<string>): Promise<UserModel | null> {
+  public async getUserBySocketId(socketId: string, relations?: Array<string>): Promise<UserModel | null> {
     return await this._userModel.findOne({
       where: {
         sockets: {
           socketId: socketId,
-        },
-      },
-      relations,
-    });
-  }
-
-  public async getUsersByConversationIds(
-    conversationIds: Array<string>,
-    relations?: Array<string>,
-  ): Promise<Array<UserModel>> {
-    return await this._userModel.find({
-      where: {
-        conversationMembers: {
-          conversation: {
-            id: In([conversationIds]),
-          },
-        },
-      },
-      relations,
-    });
-  }
-
-  public async getUserByUserIdAndConversationId(
-    userId: string,
-    conversationId: string,
-    relations?: Array<string>,
-  ): Promise<UserModel | null> {
-    return await this._userModel.findOne({
-      where: {
-        id: userId,
-        conversationMembers: {
-          conversation: {
-            id: conversationId,
-          },
         },
       },
       relations,
@@ -169,14 +135,6 @@ export default class UserRepository {
     return await this._userModel.findOne({
       where: {
         resetPasswordToken: token,
-      },
-    });
-  }
-
-  public async getUser(userId: string): Promise<UserModel | null> {
-    return await this._userModel.findOne({
-      where: {
-        id: userId,
       },
     });
   }

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';" />
+    <title>Chat</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+      /* Add your styling here */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #2c2c2c;
+        color: white;
+        margin: 0;
+        padding-left: 50px;
+        padding-right: 50px;
+      }
+
+      #header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      #chatName {
+        display: inline;
+      }
+
+      #allConversationLink {
+        display: inline;
+        margin-left: 10px;
+        cursor: pointer;
+      }
+
+      #backToConversations {
+        color: #5757ff;
+        text-decoration: none;
+      }
+
+      .messagePera {
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      .message.sent {
+        text-align: right;
+      }
+
+      .message.received {
+        text-align: left;
+      }
+
+      .messagePera.sent {
+        background-color: #5757ff;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        border-bottom-left-radius: 10px;
+      }
+
+      .messagePera.received {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+        background-color: #b4b4e4;
+      }
+
+      #messageInput {
+        width: 100%;
+        padding: 10px;
+        margin-top: 20px;
+        box-sizing: border-box;
+      }
+
+      .button {
+        background-color: #5757ff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+
+      #messagesContainer {
+        overflow-y: scroll;
+        height: 400px;
+        border-top: #5757ff 1px solid;
+        border-bottom: #5757ff 1px solid;
+      }
+
+      #messagesContainer::-webkit-scrollbar {
+        width: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="header">
+      <div class="back-email-container">
+        <a href="#" id="backToConversations">
+          Back <i class="fa-solid fa-arrow-right-from-bracket" style="color: #5757ff"></i>
+        </a>
+        <span id="userEmail"></span>
+        <!-- Display email here -->
+      </div>
+      <h2 id="chatName">Chat</h2>
+    </div>
+
+    <div id="messagesContainer">
+      <!-- Messages will be dynamically loaded here -->
+    </div>
+
+    <textarea id="messageInput" rows="4" placeholder="Type a message..."></textarea>
+    <button onclick="sendMessage()" class="button">Send</button>
+
+    <button id="leaveGroupBtn" class="button">Leave Group</button>
+    <!-- New Leave Group button -->
+
+    <script>
+      function _getToken() {
+        // Retrieve the token from localStorage
+        const token = localStorage.getItem('authToken');
+        return token;
+      }
+
+      const token = _getToken();
+      if (!token) {
+        alert('You are not authenticated. Redirecting to login page.');
+        window.location.href = '/login.html';
+      }
+
+      const decodedToken = jwt_decode(token);
+      const userEmail = decodedToken.email;
+      const userId = decodedToken.id.toLowerCase();
+
+      document.getElementById('userEmail').textContent = userEmail;
+
+      // Get the conversationId from the URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const conversationId = urlParams.get('conversationId'); // Get conversationId from query string
+
+      // Function to load the conversation (fetch conversation details)
+      async function loadConversation(conversationId) {
+        const apiUrl = `http://localhost:3000/api/v1/conversations/${conversationId}`;
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+              Authorization: 'Bearer ' + token,
+            },
+          });
+          const data = await response.json();
+          if (data.status == 200) {
+            const conversation = data.body.conversation;
+            const chatNameElement = document.getElementById('chatName');
+            if (conversation.isGroupChat) {
+              const memberNames = conversation.members.map(
+                (member) => `${member.user.firstName} ${member.user.lastName}`,
+              );
+              chatNameElement.innerHTML = `<b>${conversation.name}</b> (${memberNames})`;
+            } else {
+              chatNameElement.innerHTML = `<b>${conversation.name}</b>`;
+            }
+          }
+        } catch (error) {
+          console.error('Unable to load conversation, error: ', error);
+        }
+      }
+
+      // Function to load messages for the conversation
+      async function loadMessages() {
+        await loadConversation(conversationId);
+        const apiUrl = `http://localhost:3000/api/v1/messages/${conversationId}`;
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+              Authorization: 'Bearer ' + token,
+            },
+          });
+          const data = await response.json();
+          if (data.status == 200) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.innerHTML = '';
+
+            const messages = data.body.messages;
+            messages.forEach((message) => {
+              const sentByYou = message.sender.id.toLowerCase() == userId;
+              const messageType = sentByYou ? 'sent' : 'received';
+              displayMessage(message.message, messageType);
+            });
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          }
+        } catch (error) {
+          console.error('Unable to load messages, error: ', error);
+        }
+      }
+
+      function displayMessage(message, type) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messagePera = document.createElement('p');
+        messagePera.classList.add('messagePera', type);
+        messagePera.style.display = 'inline-block';
+        messagePera.textContent = message;
+
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', type);
+        messageElement.style.display = 'block';
+        messageElement.appendChild(messagePera);
+        messagesContainer.appendChild(messageElement);
+      }
+
+      function connectSocket(token) {
+        const socket = io('http://localhost:3000', {
+          auth: {
+            token: token,
+          },
+        });
+
+        socket.on('connected', () => {
+          console.log('Connected successfully!');
+        });
+
+        socket.on('receiveMessage', (data) => {
+          console.log('Messages received event got successfully.', data);
+          displayMessage(data.message.message, 'received');
+        });
+
+        socket.on('userLeftGroup', (data) => {
+          console.log(`${data.userId} has left the group ${data.conversationId}`);
+          const messagesContainer = document.getElementById('messagesContainer');
+          const leaveMessage = document.createElement('p');
+          leaveMessage.textContent = `${data.userId} has left the group.`;
+          messagesContainer.appendChild(leaveMessage);
+        });
+
+        return socket;
+      }
+
+      const socket = connectSocket(token);
+
+      // Function to send a new message
+      async function sendMessage() {
+        const messageInput = document.getElementById('messageInput');
+        const messageText = messageInput.value.trim();
+
+        if (messageText) {
+          try {
+            const uuid = crypto.randomUUID();
+            const payload = {
+              eventType: 'sendMessage',
+              socketId: socket.id,
+              data: {
+                conversationId: conversationId,
+                senderId: userId,
+                message: {
+                  id: uuid,
+                  message: messageText,
+                  timestamp: new Date().getTime(),
+                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
+              },
+            };
+
+            socket.emit('event', payload);
+            displayMessage(messageText, 'sent');
+            messageInput.value = '';
+          } catch (error) {
+            console.error('Error sending message:', error);
+          }
+        }
+      }
+
+      const backToConversationsElement = document.getElementById('backToConversations');
+      backToConversationsElement.addEventListener('click', () => {
+        socket.close();
+        window.location.href = 'index.html';
+      });
+
+      // Add event listener for "Leave Group" button
+      const leaveGroupButton = document.getElementById('leaveGroupBtn');
+
+      leaveGroupButton.addEventListener('click', () => {
+        const userLeaveGroupPayload = {
+          eventType: 'leaveGroup',
+          socketId: socket.id,
+          data: {
+            conversationId: conversationId,
+            userId: userId,
+          },
+        };
+
+        // Emit 'leaveGroup' event to the server
+        socket.emit('event', userLeaveGroupPayload);
+
+        // Optionally close the socket connection and redirect the user to another page
+        socket.close();
+        window.location.href = '/index.html'; // Redirecting to conversations page
+      });
+
+      loadMessages(); // Initially load the conversation and messages
+    </script>
+  </body>
+</html>

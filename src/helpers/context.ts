@@ -16,7 +16,7 @@ export default class RequestContext {
       requestId: this.requestId,
       method: request.method,
       url: request.url,
-      ip: request.ip,
+      ip: request.ip || '',
       message: 'New Request',
       action: 'begin',
       source: 'requestContext#constructor',
@@ -98,6 +98,7 @@ export default class RequestContext {
       action: logInfo.action,
       source: logInfo.source,
       data: logInfo.data,
+      error: logInfo.error,
     } as LogDetails;
   }
 }

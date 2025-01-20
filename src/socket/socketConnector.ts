@@ -8,6 +8,7 @@ import {
   AddUsersInGroupEventRequest,
   AdminRenameGroupEventRequest,
   AdminUpdateRoleEventRequest,
+  DeleteMessageSenderEventRequest,
   EventRequest,
   MessageStatusEventRequest,
   RemoveUserFromGroupEventRequest,
@@ -33,7 +34,7 @@ export default class SocketConnector {
         const decodedToken: JWT_OBJECT = this._checkAndVerifyToken(socket.handshake.auth.token);
         const userId: string | number = decodedToken.id;
         const userService: UserService = new UserService();
-        const dbUser: UserModel | null = await userService.getUserByUserId(userId as string);
+        const dbUser: UserModel | null = await userService.getUserByUserId(userId);
         if (!dbUser) {
           throw new Error('User not found.');
         }
@@ -67,8 +68,13 @@ export default class SocketConnector {
     });
 
     socket.on(SocketEventEnum.Disconnect, async () => {
-      const socketId: string = socket.id;
-      await socketEventHandler.processDisconnectEvent(socketId);
+      try {
+        const socketId: string = socket.id;
+        await socketEventHandler.processDisconnectEvent(socketId);
+      } catch (error) {
+        const customError: CustomError = CustomError.getCustomErrorObject(error);
+        this.emitErrorEvent(socket.id, customError);
+      }
     });
   }
 
@@ -116,10 +122,12 @@ export default class SocketConnector {
         await socketEventHandler.processAddUsersInGroupEvent(socketRequest.data as AddUsersInGroupEventRequest);
         break;
       }
+      //if user remove through the itself the we call this event
       case SocketEventEnum.LeaveGroup: {
         await socketEventHandler.processLeaveGroupEvent(socketRequest.data as UserLeaveGroupEventRequest);
         break;
       }
+      //if admin remove user from group then we call this event
       case SocketEventEnum.RemoveUserFromGroup: {
         await socketEventHandler.processRemoveUserFromGroupEvent(socketRequest.data as RemoveUserFromGroupEventRequest);
         break;
@@ -130,6 +138,10 @@ export default class SocketConnector {
       }
       case SocketEventEnum.UpdateUserRoleInGroup: {
         await socketEventHandler.processUpdateUserRoleInGroupEvent(socketRequest.data as AdminUpdateRoleEventRequest);
+        break;
+      }
+      case SocketEventEnum.DeleteMessage: {
+        await socketEventHandler.processDeleteMessageEvent(socketRequest.data as DeleteMessageSenderEventRequest);
         break;
       }
     }

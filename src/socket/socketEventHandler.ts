@@ -8,6 +8,7 @@ import {
   AddUsersInGroupEventRequest,
   AdminRenameGroupEventRequest,
   AdminUpdateRoleEventRequest,
+  DeleteMessageSenderEventRequest,
   EventRequest,
   MessageStatusEventRequest,
   ReceiveMessageEventRequest,
@@ -76,8 +77,11 @@ export default class SocketEventHandler {
       conversationId,
       message,
     };
-    const users: Array<UserModel> = await this._userService.getUsersByConversationIds([conversationId], ['sockets']);
-    this._emitEventToUsers(users, senderId, SocketEventEnum.ReceiveMessage, receiveMessageRequest);
+    const users: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(
+      [conversationId],
+      ['sockets'],
+    );
+    SocketEventHandler.emitEventToUsers(users, senderId, SocketEventEnum.ReceiveMessage, receiveMessageRequest);
 
     //Saving message status in the database.
     const messageStatusModel = new MessageStatusModel();
@@ -114,12 +118,15 @@ export default class SocketEventHandler {
     messageStatusModel.timestamp = timestamp;
     messageStatusModel.timezone = timezone;
     await this._messageStatusService.insertMessageStatus(messageStatusModel);
-    const users: Array<UserModel> = await this._userService.getUsersByConversationIds([conversationId], ['sockets']);
-    this._emitEventToUsers(users, userId, SocketEventEnum.MessageStatus, messageStatusEventRequest);
+    const users: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(
+      [conversationId],
+      ['sockets'],
+    );
+    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.MessageStatus, messageStatusEventRequest);
   }
 
   public async processConnectEvent(socketId: string): Promise<void> {
-    let user: UserModel | null = await this._userService.getUserIdBySocketId(socketId, [
+    let user: UserModel | null = await this._userService.getUserBySocketId(socketId, [
       'conversationMembers',
       'conversationMembers.conversation',
     ]);
@@ -129,20 +136,20 @@ export default class SocketEventHandler {
         return conversationMembers.conversation.id;
       },
     );
-    const userId = user.id;
 
+    const userId = user.id;
     const dbUsers: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(conversationIds, [
       'sockets',
     ]);
     const users = dbUsers.filter((user: UserModel): boolean => user.id !== userId);
-    this._emitEventToUsers(users, userId, SocketEventEnum.UserStatus, {
+    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.UserStatus, {
       userId,
       status: UserStatusEnum.ONLINE,
     });
   }
 
   public async processDisconnectEvent(socketId: string): Promise<void> {
-    let user: UserModel | null = await this._userService.getUserIdBySocketId(socketId, [
+    let user: UserModel | null = await this._userService.getUserBySocketId(socketId, [
       'conversationMembers',
       'conversationMembers.conversation',
     ]);
@@ -155,12 +162,12 @@ export default class SocketEventHandler {
 
     const [users] = await Promise.all([
       //we need to fetch unique users only
-      this._userService.getUsersByConversationIds(conversationIds, ['sockets']),
+      this._userService.getLoggedInUsersByConversationIds(conversationIds, ['sockets']),
       this._socketService.removeSocket(socketId),
     ]);
 
     const userId = user.id;
-    this._emitEventToUsers(users, userId, SocketEventEnum.UserStatus, {
+    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.UserStatus, {
       userId,
       status: UserStatusEnum.OFFLINE,
     });
@@ -176,7 +183,7 @@ export default class SocketEventHandler {
         ['members', 'members.role'],
       );
     if (!conversation || !conversation.isGroupChat) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_COULD_NOT_BE_FOUND);
+      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
     }
 
     const adminMember: ConversationMemberModel = conversation.members[0];
@@ -184,8 +191,11 @@ export default class SocketEventHandler {
 
     await this._conversationService.updateByConversationId(conversationId, groupName);
     //First we need to check all above condition then we need to call all users
-    const users: Array<UserModel> = await this._userService.getUsersByConversationIds([conversationId], ['sockets']);
-    this._emitEventToUsers(users, adminId, SocketEventEnum.RenameGroup, {
+    const users: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(
+      [conversationId],
+      ['sockets'],
+    );
+    SocketEventHandler.emitEventToUsers(users, adminId, SocketEventEnum.RenameGroup, {
       adminId,
       conversationId,
       groupName,
@@ -243,13 +253,13 @@ export default class SocketEventHandler {
     const conversationOldUsers: UserModel[] = conversationOldMembers.map(
       (oldMember: ConversationMemberModel): UserModel => oldMember.user,
     );
-    this._emitEventToUsers(conversationOldUsers, adminId, SocketEventEnum.AddUserInGroup, {
+    SocketEventHandler.emitEventToUsers(conversationOldUsers, adminId, SocketEventEnum.AddUserInGroup, {
       adminId,
       conversationId,
       userIds: userIdsToAddInConversation,
     });
     //sending event to users who added in the conversation.
-    this._emitEventToUsers(usersToAddInConversation, adminId, SocketEventEnum.JoinChat, {
+    SocketEventHandler.emitEventToUsers(usersToAddInConversation, adminId, SocketEventEnum.JoinChat, {
       conversationId,
     });
   }
@@ -264,14 +274,13 @@ export default class SocketEventHandler {
         ['members', 'members.user', 'members.role'],
       );
     if (!conversation || !conversation.isGroupChat) {
-      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_COULD_NOT_BE_FOUND);
+      throw new CustomError(HttpStatusCode.NOT_FOUND, CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
     }
 
     const member: ConversationMemberModel = conversation.members[0];
     if (member.role.name === RolesEnum.ADMIN) {
-      const adminMemberCount: number = await this._conversationMemberService.getAdminMemberCountByConversationId(
-        conversationId,
-      );
+      const adminMemberCount: number =
+        await this._conversationMemberService.getAdminMemberCountByConversationId(conversationId);
       if (adminMemberCount === 1) {
         const firstUserMember: ConversationMemberModel | null =
           await this._conversationMemberService.getFirstUserMemberByConversationId(conversationId);
@@ -285,8 +294,11 @@ export default class SocketEventHandler {
     }
     await this._conversationMemberService.deleteByConversationMemberId(member.id);
 
-    const users: Array<UserModel> = await this._userService.getUsersByConversationIds([conversationId], ['sockets']);
-    this._emitEventToUsers(users, userId, SocketEventEnum.LeaveGroup, userLeaveGroupEventRequest);
+    const users: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(
+      [conversationId],
+      ['sockets'],
+    );
+    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.LeaveGroup, userLeaveGroupEventRequest);
   }
 
   public async processRemoveUserFromGroupEvent(
@@ -313,12 +325,22 @@ export default class SocketEventHandler {
     userMember = this._validateUserMember(userMember);
 
     await this._conversationMemberService.deleteByConversationMemberId(userMember.id);
-    const users: Array<UserModel> = await this._userService.getUsersByConversationIds([conversationId], ['sockets']);
-    this._emitEventToUsers(users, adminId, SocketEventEnum.RemoveUserFromGroup, removeUserFromGroupEventRequest);
+    const users: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(
+      [conversationId],
+      ['sockets'],
+    );
+    SocketEventHandler.emitEventToUsers(
+      users,
+      adminId,
+      SocketEventEnum.RemoveUserFromGroup,
+      removeUserFromGroupEventRequest,
+    );
   }
 
-  public async processUpdateUserRoleInGroupEvent(adminUpdateRoleEvent: AdminUpdateRoleEventRequest): Promise<void> {
-    const { adminId, userId, roleId, conversationId } = adminUpdateRoleEvent;
+  public async processUpdateUserRoleInGroupEvent(
+    adminUpdateRoleEventRequest: AdminUpdateRoleEventRequest,
+  ): Promise<void> {
+    const { adminId, userId, roleId, conversationId } = adminUpdateRoleEventRequest;
 
     let conversation: ConversationModel | null =
       await this._conversationService.getConversationByConversationIdAndUserIds(
@@ -345,12 +367,53 @@ export default class SocketEventHandler {
     await this._conversationMemberService.updateByConversationMemberId(userMember.id, { roleKey: role.key });
 
     //We only need to send the user role update event to the user whose role has been updated.
-    this._emitEventToUsers([userMember.user], adminId, SocketEventEnum.UpdateUserRoleInGroup, adminUpdateRoleEvent);
+    SocketEventHandler.emitEventToUsers(
+      [userMember.user],
+      adminId,
+      SocketEventEnum.UpdateUserRoleInGroup,
+      adminUpdateRoleEventRequest,
+    );
+  }
+
+  public async processDeleteMessageEvent(deleteMessageSenderEventRequest: DeleteMessageSenderEventRequest) {
+    const { conversationId, userId, messageId } = deleteMessageSenderEventRequest;
+
+    const conversation: ConversationModel | null =
+      await this._conversationService.getConversationByConversationIdAndUserIdAndMessageId(
+        conversationId,
+        userId,
+        messageId,
+      );
+    this._validateConversation(conversation);
+    await this._messageService.deleteUserMessageByMessageId(messageId);
+    const users: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(
+      [conversationId],
+      ['sockets'],
+    );
+    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.DeleteMessage, {
+      conversationId,
+      messageId,
+    });
+  }
+
+  public static emitEventToUsers(
+    users: Array<UserModel>,
+    userId: string,
+    eventType: SocketEventEnum,
+    request: EventRequest,
+  ): void {
+    if (!users.length) return;
+    for (const user of users) {
+      if (userId === user.id) {
+        continue;
+      }
+      this._emitEventToSocketConnections(user.sockets, eventType, request);
+    }
   }
 
   private _validateConversation(conversation?: ConversationModel | null): ConversationModel {
     if (!conversation) {
-      throw CustomError.getNotFoundError(CONVERSATION_MESSAGES.CONVERSATION_COULD_NOT_BE_FOUND);
+      throw CustomError.getNotFoundError(CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
     }
     return conversation;
   }
@@ -379,7 +442,7 @@ export default class SocketEventHandler {
     return conversationMember;
   }
 
-  private _emitEventToSocketConnections(
+  private static _emitEventToSocketConnections(
     sockets: Array<SocketModel>,
     eventType: SocketEventEnum,
     eventRequest: EventRequest,
@@ -387,21 +450,6 @@ export default class SocketEventHandler {
     if (!sockets.length) return;
     for (const socket of sockets) {
       SocketConnector.emitEvent(socket.socketId, eventType, eventRequest);
-    }
-  }
-
-  private _emitEventToUsers(
-    users: Array<UserModel>,
-    userId: string,
-    eventType: SocketEventEnum,
-    request: EventRequest,
-  ): void {
-    if (!users.length) return;
-    for (const user of users) {
-      if (userId === user.id) {
-        continue;
-      }
-      this._emitEventToSocketConnections(user.sockets, eventType, request);
     }
   }
 }

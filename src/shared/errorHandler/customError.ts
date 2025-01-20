@@ -7,6 +7,7 @@ import { ErrorResponseBody } from './apiErrorResponseBody';
 import { ApiResponse } from './apiResponse';
 import { INTERNAL_SERVER_ERROR, SOMETHING_WENT_WRONG } from '@src/config/messages/codes';
 import { ErrorItem } from '../types/apiErrorRequestType';
+import { HTTP_STATUS_MESSAGE } from '@src/constants/messages';
 
 export default class CustomError extends Error {
   public status: number;
@@ -82,18 +83,18 @@ export default class CustomError extends Error {
   }
 
   public static getNotFoundError(message: string): CustomError {
-    return new CustomError(HttpStatusCode.NOT_FOUND, message);
+    return new CustomError(HttpStatusCode.NOT_FOUND, HTTP_STATUS_MESSAGE.NOT_FOUND, [{ messages: [message] }]);
   }
 
   public static getBadRequestError(message: string): CustomError {
-    return new CustomError(HttpStatusCode.BAD_REQUEST, message);
+    return new CustomError(HttpStatusCode.BAD_REQUEST, HTTP_STATUS_MESSAGE.BAD_REQUEST, [{ messages: [message] }]);
   }
 
   public static getConflictError(message: string): CustomError {
-    return new CustomError(HttpStatusCode.BAD_REQUEST, message);
+    return new CustomError(HttpStatusCode.CONFLICT, HTTP_STATUS_MESSAGE.CONFLICT, [{ messages: [message] }]);
   }
 
   public static getUnauthorizedError(message: string): CustomError {
-    return new CustomError(HttpStatusCode.UNAUTHORIZED, message);
+    return new CustomError(HttpStatusCode.UNAUTHORIZED, HTTP_STATUS_MESSAGE.UNAUTHORIZED, [{ messages: [message] }]);
   }
 }

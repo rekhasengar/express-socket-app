@@ -1,8 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
-import helmet from 'helmet';
+// import helmet from 'helmet';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import httpStatusCode from 'http-status-codes';
@@ -16,6 +14,7 @@ import constants from './constants';
 import CustomError from './shared/errorHandler/customError';
 import SocketConnector from './socket/socketConnector';
 import processRoleSeeder from './seeders/roleSeeder';
+import v1Router from './routes/v1';
 // import blockedAt from 'blocked-at';
 
 const app = express();
@@ -25,7 +24,7 @@ if (!isProduction) {
 }
 
 app.use(cors());
-app.use(helmet());
+// app.use(helmet());
 
 // request payload middleware
 app.use(express.json());
@@ -47,7 +46,6 @@ app.use(express.static('public'));
 // );
 
 const httpServer = createServer(app);
-
 const io = new Server(httpServer, {
   pingTimeout: 60000,
   cors: {
@@ -55,7 +53,6 @@ const io = new Server(httpServer, {
     credentials: true,
   },
 });
-
 SocketConnector.initialize(io);
 
 (async () => {
@@ -118,21 +115,13 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
+//Checking server health.
 app.get('/', (_req: Request, res: Response, _next: NextFunction) => {
   res.status(httpStatusCode.OK).send({ message: constants.SERVER_WELCOME_MESSAGE });
 });
 
-/**
- * ----------------------------- Start of V1 APIs ------------------------
- */
-fs.readdirSync(path.resolve(__dirname, 'routes', 'v1')).forEach((file) => {
-  if (!file.includes('.js.') && !file.includes('.ts.') && !file.includes('.d.ts')) {
-    console.log(file);
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { router, basePath } = require(`./routes/v1/${file}`);
-    app.use(basePath, router);
-  }
-});
+//v1 api router.
+app.use('/api', v1Router);
 
 const server = httpServer.listen(port, () => {
   console.info(`Started on port : ${port}`);
@@ -151,14 +140,26 @@ swagger.serveSwagger(app, '/swagger', swaggerOptions, {
   responseModelFolderName: 'responseModels',
 });
 
-app.get('*', (_req: Request, res: Response, _next: NextFunction) => {
+app.all('*', (_req: Request, res: Response, _next: NextFunction) => {
   res.status(httpStatusCode.NOT_FOUND).send(constants.ROUTE_NOT_FOUND);
 });
 
 // error handler middleware
-app.use(function (err: Error, req: Request, res: Response, _next: NextFunction) {
-  const customError = CustomError.getCustomErrorObject(err);
-  return CustomError.errorHandler(customError, res);
+app.use(function (err: CustomError, req: Request, res: Response, _next: NextFunction) {
+  const context = req.context;
+  const customError = <CustomError>{
+    status: err.status,
+    message: err.message,
+    errors: err.errors,
+    stack: err.stack,
+  };
+  context.logError({
+    message: err.errors[0].messages?.join(),
+    source: req.originalUrl,
+    error: customError,
+    action: 'Error',
+  });
+  return CustomError.errorHandler(err, res);
 });
 
 module.exports = server;

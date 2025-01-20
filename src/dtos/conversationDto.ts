@@ -1,5 +1,9 @@
 import RequestContext from '@src/helpers/context';
-import { CreateConversationRequest, DeleteConversationMessagePathParams } from '@src/types/request/conversationRequest';
+import {
+  CreateConversationRequest,
+  DeleteConversationMessagePathParams,
+  GetConversationPathParams,
+} from '@src/types/request/conversationRequest';
 
 export class CreateConversationDto {
   adminId: string;
@@ -37,6 +41,20 @@ export class GetConversationMessageDto {
   locale: string;
 
   constructor(userId: string, context: RequestContext, locale: string) {
+    this.userId = userId;
+    this.context = context;
+    this.locale = locale;
+  }
+}
+
+export class GetConversationDto {
+  conversationId: string;
+  userId: string;
+  context: RequestContext;
+  locale: string;
+
+  constructor(pathParams: GetConversationPathParams, userId: string, context: RequestContext, locale: string) {
+    this.conversationId = pathParams.conversationId;
     this.userId = userId;
     this.context = context;
     this.locale = locale;

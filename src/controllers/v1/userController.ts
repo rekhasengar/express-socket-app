@@ -10,7 +10,7 @@ import EmptyObject from '@src/types/request/emptyObject';
 import {
   DeleteUserResponse,
   GetAllUsersResponse,
-  GetUserResponse,
+  GetSingleUserResponse,
   UpdateUserResponse,
 } from '@src/types/response/userResponse';
 import { UserUpdateRequest } from '@src/types/request/userRequest';
@@ -22,14 +22,14 @@ export default class UserController {
   constructor() {
     this._userService = new UserService();
   }
-  public async getAllUsers(
+  public async getAllRegisterUserList(
     req: CustomRequest<EmptyObject, GetAllUsersResponse, EmptyObject, EmptyObject>,
     res: Response<ApiResponse<GetAllUsersResponse>>,
     next: NextFunction,
   ): Promise<void> {
     const response = new ApiResponse<GetAllUsersResponse>();
     try {
-      const responseFromService = await this._userService.getAllUsers(req.context);
+      const responseFromService = await this._userService.getAllRegisterUserList(req.context);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
@@ -40,7 +40,7 @@ export default class UserController {
     }
   }
 
-  public async updateUser(
+  public async updateUserDetails(
     req: CustomRequest<EmptyObject, UpdateUserResponse, UserUpdateRequest, EmptyObject>,
     res: Response<ApiResponse<UpdateUserResponse>>,
     next: NextFunction,
@@ -49,7 +49,7 @@ export default class UserController {
 
     try {
       const updateUserDto = new UpdateUserDto(req.app.locals.userId, req.body, req.context);
-      const responseFromService = await this._userService.updateUser(updateUserDto);
+      const responseFromService = await this._userService.updateUserDetails(updateUserDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
@@ -61,11 +61,11 @@ export default class UserController {
   }
 
   public async getUser(
-    req: CustomRequest<EmptyObject, GetUserResponse, EmptyObject, EmptyObject>,
-    res: Response<ApiResponse<GetUserResponse>>,
+    req: CustomRequest<EmptyObject, GetSingleUserResponse, EmptyObject, EmptyObject>,
+    res: Response<ApiResponse<GetSingleUserResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<GetUserResponse>();
+    const response = new ApiResponse<GetSingleUserResponse>();
 
     try {
       const getUserDto = new GetUserDto(req.app.locals.userId, req.context);

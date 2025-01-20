@@ -1,9 +1,13 @@
 import { LOGS, USER_CHAT_TYPE } from '@src/constants';
 import UserService from './userService';
-import { ConversationResponse, GetConversationsResponse } from '@src/types/response/conversationResponse';
+import {
+  CreateConversationResponse,
+  GetConversationResponse,
+  GetConversationsResponse,
+} from '@src/types/response/conversationResponse';
 import ConversationRepository from '@src/repositories/v1/conversationRepository';
 import { ConversationModel } from '@src/database/mysql/models/conversationModel';
-import { CreateConversationDto, GetConversationMessageDto } from '@src/dtos/conversationDto';
+import { CreateConversationDto, GetConversationDto, GetConversationMessageDto } from '@src/dtos/conversationDto';
 import ConversationMemberService from './conversationMemberService';
 import { ConversationMemberModel } from '@src/database/mysql/models/conversationMemberModel';
 import { UserModel } from '@src/database/mysql/models/userModel';
@@ -12,6 +16,8 @@ import RolesEnum from '@src/enums/rolesEnum';
 import { CONVERSATION_MESSAGES, USER_MESSAGES } from '@src/constants/messages';
 import RequestContext from '@src/helpers/context';
 import CustomError from '@src/shared/errorHandler/customError';
+import SocketEventHandler from '@src/socket/socketEventHandler';
+import SocketEventEnum from '@src/enums/socketEventEnum';
 
 export default class ConversationService {
   private readonly _userService: UserService;
@@ -31,7 +37,9 @@ export default class ConversationService {
     return this._conversationRepository.getConversationByConversationId(conversationId, relations);
   }
 
-  public async createNewConversation(createConversationDto: CreateConversationDto): Promise<ConversationResponse> {
+  public async createNewConversation(
+    createConversationDto: CreateConversationDto,
+  ): Promise<CreateConversationResponse> {
     const { context, userIds, groupName, isGroupChat } = createConversationDto;
     let { adminId } = createConversationDto;
 
@@ -41,7 +49,7 @@ export default class ConversationService {
 
     userIds.push(adminId);
     const distinctUserIds: Array<string> = Array.from(new Set<string>(userIds));
-    const dbUsers: Array<UserModel> = await this._userService.getAllUserByUserIds(distinctUserIds);
+    const dbUsers: Array<UserModel> = await this._userService.getAllUserByUserIds(distinctUserIds, ['sockets']);
 
     adminId = adminId.trim().toLowerCase();
     let admin: UserModel | undefined;
@@ -59,11 +67,16 @@ export default class ConversationService {
     }
 
     users.push(admin);
-    if (isGroupChat && users.length > 1) {
-      await this._createGroupConversation(users, adminId, groupName, context);
+    let conversation: ConversationModel;
+    if ((isGroupChat && users.length > 1) || users.length > 1) {
+      conversation = await this._createGroupConversation(users, admin, groupName, context);
     } else {
-      await this._createOneToOneConversation(users, context);
+      conversation = await this._createOneToOneConversation(users, admin, context);
     }
+
+    SocketEventHandler.emitEventToUsers(users, adminId, SocketEventEnum.JoinChat, {
+      conversationId: conversation.id,
+    });
 
     context.logInfo({
       source: LOGS.GET_SOURCE(ConversationService.name, this.createNewConversation.name),
@@ -74,7 +87,7 @@ export default class ConversationService {
     };
   }
 
-  public async getConversations(
+  public async getAllConversationsByUserId(
     getConversationMessageDto: GetConversationMessageDto,
   ): Promise<GetConversationsResponse> {
     const { userId, context } = getConversationMessageDto;
@@ -105,13 +118,32 @@ export default class ConversationService {
     );
 
     context.logInfo({
-      source: LOGS.GET_SOURCE(ConversationService.name, this.getConversations.name),
+      source: LOGS.GET_SOURCE(ConversationService.name, this.getAllConversationsByUserId.name),
       message: CONVERSATION_MESSAGES.CONVERSATION_CREATED_SUCCESSFULLY,
     });
 
     return {
       conversations: conversations,
     };
+  }
+
+  public async getConversation(getConversationDto: GetConversationDto): Promise<GetConversationResponse> {
+    const { conversationId } = getConversationDto;
+    let { userId } = getConversationDto;
+    userId = userId.toLowerCase();
+    const conversation = await this._conversationRepository.getConversationByConversationIdForApi(conversationId);
+    if (!conversation) {
+      throw CustomError.getNotFoundError(CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
+    }
+    if (!conversation.isGroupChat) {
+      const secondMember = conversation.members.find(
+        (member: ConversationMemberModel): boolean => member.user.id.toLowerCase() != userId,
+      );
+      if (secondMember) {
+        conversation.name = `${secondMember.user.firstName} ${secondMember.user.lastName}`;
+      }
+    }
+    return { conversation };
   }
 
   public async updateByConversationId(conversationId: string, groupName: string): Promise<void> {
@@ -132,10 +164,27 @@ export default class ConversationService {
     );
   }
 
-  private async _createOneToOneConversation(users: Array<UserModel>, context: RequestContext): Promise<void> {
+  public async getConversationByConversationIdAndUserIdAndMessageId(
+    conversationId: string,
+    userId: string,
+    messageId: string,
+  ): Promise<ConversationModel | null> {
+    return await this._conversationRepository.getConversationByConversationIdAndUserIdAndMessageId(
+      conversationId,
+      userId,
+      messageId,
+    );
+  }
+
+  private async _createOneToOneConversation(
+    users: Array<UserModel>,
+    admin: UserModel,
+    context: RequestContext,
+  ): Promise<ConversationModel> {
     const conversationModel: ConversationModel = new ConversationModel();
     conversationModel.name = USER_CHAT_TYPE.ONE_TO_ONE_CHAT;
     conversationModel.isGroupChat = false;
+    conversationModel.createdByKey = admin.key;
     const dbConversation: ConversationModel = await this._conversationRepository.saveConversation(conversationModel);
 
     const userRoleKey: number = getRoleKeyByName(RolesEnum.USER);
@@ -151,19 +200,21 @@ export default class ConversationService {
     await this._conversationMemberService.insertConversationMembers(conversationMemberModels);
     context.logInfo({
       source: LOGS.GET_SOURCE(ConversationService.name, this._createOneToOneConversation.name),
-      message: CONVERSATION_MESSAGES.ONE_TO_ONE_CONVERSATION_CREATED_WAS_SUCCESSFULLY,
+      message: CONVERSATION_MESSAGES.ONE_TO_ONE_CONVERSATION_CREATED_SUCCESSFULLY,
     });
+    return dbConversation;
   }
 
   private async _createGroupConversation(
     users: Array<UserModel>,
-    adminId: string,
+    admin: UserModel,
     groupName: string | undefined,
     context: RequestContext,
-  ): Promise<void> {
+  ): Promise<ConversationModel> {
     const conversationModel: ConversationModel = new ConversationModel();
     conversationModel.name = groupName || 'group chat';
     conversationModel.isGroupChat = true;
+    conversationModel.createdByKey = admin.key;
     const dbConversation: ConversationModel = await this._conversationRepository.saveConversation(conversationModel);
 
     const userRoleKey: number = getRoleKeyByName(RolesEnum.USER);
@@ -174,14 +225,15 @@ export default class ConversationService {
       const conversationMemberModel = new ConversationMemberModel();
       conversationMemberModel.conversationKey = dbConversation.key;
       conversationMemberModel.userKey = user.key;
-      conversationMemberModel.roleKey = user.id === adminId ? adminRoleKey : userRoleKey;
+      conversationMemberModel.roleKey = user.id === admin.id ? adminRoleKey : userRoleKey;
       conversationMemberModels.push(conversationMemberModel);
     }
 
     await this._conversationMemberService.insertConversationMembers(conversationMemberModels);
     context.logInfo({
-      source: LOGS.GET_SOURCE(ConversationService.name, this._createOneToOneConversation.name),
-      message: CONVERSATION_MESSAGES.GROUP_CONVERSATION_CREATED_WAS_SUCCESSFULLY,
+      source: LOGS.GET_SOURCE(ConversationService.name, this._createGroupConversation.name),
+      message: CONVERSATION_MESSAGES.GROUP_CONVERSATION_CREATED_SUCCESSFULLY,
     });
+    return dbConversation;
   }
 }

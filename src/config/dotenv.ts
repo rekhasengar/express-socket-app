@@ -11,8 +11,8 @@ export function loadDotEnv(): DotEnvResponse {
   const env = process.env;
   const dotEnvResponse = {
     env,
-    isProduction: env.NODE_ENV === 'production',
-    isTest: env.NODE_ENV === 'test' || env.NODE_ENV === 'ci',
+    isProduction: env.NODE_ENV && env.NODE_ENV.toLowerCase() === 'production',
+    isTest: env.NODE_ENV && (env.NODE_ENV.toLowerCase() === 'test' || env.NODE_ENV?.toLowerCase() === 'ci'),
   };
 
   /**

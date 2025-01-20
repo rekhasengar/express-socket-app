@@ -1,54 +1,55 @@
 import { Router } from 'express';
 
-import { API_ROUTE } from '@src/constants';
+import { API_ROUTES } from '@src/constants';
 import { PathParams, QueryParams, RequestBody, ResponseBody } from '@src/shared/types/customExpressRequest';
 import {
-  ConversationResponse,
-  GetConversationMessageResponse,
+  CreateConversationResponse,
+  GetConversationMessagesResponse,
+  GetConversationResponse,
   GetConversationsResponse,
 } from '@src/types/response/conversationResponse';
-import { CreateConversationRequest } from '@src/types/request/conversationRequest';
+import { CreateConversationRequest, GetConversationPathParams } from '@src/types/request/conversationRequest';
 import { checkToken } from '@src/middlewares/checkToken';
 import ConversationSchema from '@src/helpers/joiValidator/schemas/conversation';
 import { doValidation } from '@src/helpers/joiValidator';
-import ConversationController from '@src/controllers/v1/conversationController';
 import { MessagePathRequest, MessageQueryRequest } from '@src/types/request/messageRequest';
-import conversationRequestModel from '../../requestModels/conversation';
-import { validation } from '@src/privateLibs/swagger-generator-express';
+import ConversationController from '@src/controllers/v1/conversationController';
 
 const conversationRoute = Router();
-const conversationController = new ConversationController();
 
 conversationRoute.post<
   PathParams,
-  ResponseBody<ConversationResponse>,
+  ResponseBody<CreateConversationResponse>,
   RequestBody<CreateConversationRequest>,
   QueryParams
->(
-  '/create',
-  checkToken,
-  validation(conversationRequestModel[0]),
-  doValidation(ConversationSchema.CreateConversationRequest),
-  (...args): void => {
-    conversationController.createNewConversation(...args);
-  },
-);
+>('/', checkToken, doValidation(ConversationSchema.CreateConversationRequest), (...args): void => {
+  new ConversationController().createNewConversation(...args);
+});
 
 conversationRoute.get<PathParams, ResponseBody<GetConversationsResponse>, RequestBody, QueryParams>(
   '/',
   checkToken,
   (...args): void => {
-    conversationController.getConversations(...args);
+    new ConversationController().getAllConversationsByUserId(...args);
   },
 );
 
 conversationRoute.get<
   PathParams<MessagePathRequest>,
-  ResponseBody<GetConversationMessageResponse>,
+  ResponseBody<GetConversationMessagesResponse>,
   RequestBody,
   QueryParams<MessageQueryRequest>
->('/:conversationId', validation(conversationRequestModel[1]), (...args): void => {
-  conversationController.getUserMessages(...args);
+>('/:conversationId', (...args): void => {
+  new ConversationController().getUserMessagesByConversationId(...args);
 });
 
-module.exports = { router: conversationRoute, basePath: API_ROUTE.CONVERSATIONS };
+conversationRoute.get<
+  PathParams<GetConversationPathParams>,
+  ResponseBody<GetConversationResponse>,
+  RequestBody,
+  QueryParams
+>('/:conversationId', checkToken, (...args): void => {
+  new ConversationController().getConversationByConversationId(...args);
+});
+
+module.exports = { router: conversationRoute, basePath: API_ROUTES.CONVERSATIONS };

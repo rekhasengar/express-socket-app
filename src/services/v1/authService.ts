@@ -6,7 +6,7 @@ import CustomError from '@src/shared/errorHandler/customError';
 import UserService from './userService';
 import { generateJWT } from '@src/utils/jwt';
 import { AUTH_MESSAGES, USER_MESSAGES } from '@src/constants/messages';
-import { API_ROUTE, LOGS } from '@src/constants';
+import { API_ROUTES, LOGS } from '@src/constants';
 import EmailService from '@src/utils/email';
 import { serverConfig } from '@src/config';
 import {
@@ -101,10 +101,11 @@ export default class AuthService {
     const emailInfo = {
       to: user.email,
       subject: 'Reset Your Password',
-      html: `Please use <a href="${serverConfig.APP_URL}/${API_ROUTE.AUTH}/password-reset?token=${token}">this link</a> to reset your password.`,
+      html: `Please use <a href="${serverConfig.APP_URL}/${API_ROUTES.AUTH}/password-reset?token=${token}">this link</a> to reset your password.`,
     };
     await Promise.all([
       this._userService.updateUserByUserId(user.id, { resetPasswordToken: token }),
+      //TODO:REKHA-check why we are not able to send email
       this._emailService.sendEmail(emailInfo),
     ]);
     context.logInfo({

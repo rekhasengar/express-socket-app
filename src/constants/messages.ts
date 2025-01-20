@@ -42,10 +42,10 @@ export const ROLE_MESSAGES = {
 export const CONVERSATION_MESSAGES = {
   CONVERSATION_CREATED_SUCCESSFULLY: 'Conversation created successfully.',
   CONVERSATION_MESSAGE_DELETED_SUCCESSFULLY: 'Conversation message deleted successfully.',
-  ONE_TO_ONE_CONVERSATION_CREATED_WAS_SUCCESSFULLY: 'One to one conversation was created successfully.',
-  GROUP_CONVERSATION_CREATED_WAS_SUCCESSFULLY: 'Group conversation was created successfully.',
+  ONE_TO_ONE_CONVERSATION_CREATED_SUCCESSFULLY: 'One to one conversation created successfully.',
+  GROUP_CONVERSATION_CREATED_SUCCESSFULLY: 'Group conversation created successfully.',
   USER_NOT_FOUND_IN_THIS_CONVERSATION: 'You are not in this conversation.',
-  CONVERSATION_COULD_NOT_BE_FOUND: 'Conversation could not be found.',
+  CONVERSATION_NOT_FOUND: 'Conversation not found.',
   CONVERSATION_MESSAGE_DOES_NOT_EXIST: 'Conversation message does not exist.',
   CONVERSATION_MESSAGE_FETCHED_SUCCESSFULLY: ' Conversation message fetched successfully.',
 };
@@ -57,4 +57,13 @@ export const CONVERSATION_MESSAGE_MESSAGES = {
 
 export const CONTROLLER_MESSAGE = {
   SUCCESS: 'Success',
+};
+
+export const HTTP_STATUS_MESSAGE = {
+  UNAUTHORIZED: 'Unauthorized',
+  BAD_REQUEST: 'Bad request',
+  CONFLICT: 'Conflict',
+  FORBIDDEN: 'Forbidden',
+  NOT_FOUND: 'Not found',
+  INTERNAL_SERVER_ERROR: 'Internal server error',
 };
