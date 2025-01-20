@@ -74,7 +74,7 @@ export default class MessageRepository {
     conversationId: string,
     messageId: string,
     userId: string,
-    relations?: string[],
+    relations?: Array<string>,
   ): Promise<MessageModel | null> {
     return await this._messageModel.findOne({
       where: {

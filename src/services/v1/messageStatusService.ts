@@ -2,7 +2,7 @@ import { MessageStatusModel } from '@src/database/mysql/models/messageStatusMode
 import { MessageStatusRepository } from '@src/repositories/v1/messageStatusRepository';
 
 export default class MessageStatusService {
-  private _messageStatusRepository: MessageStatusRepository;
+  private readonly _messageStatusRepository: MessageStatusRepository;
 
   constructor() {
     this._messageStatusRepository = new MessageStatusRepository();

@@ -17,7 +17,7 @@ export default class ConversationRepository {
     return await this._conversationModel.findOne({ where: { id: conversationId }, relations });
   }
 
-  public async getConversationByConversationIdForApi(conversationId: string) {
+  public async getConversationByConversationIdForApi(conversationId: string): Promise<ConversationModel | null> {
     return await this._conversationModel.findOne({
       select: {
         name: true,

@@ -27,7 +27,7 @@ export default class SocketConnector {
 
   public static async initialize(io: Server): Promise<void> {
     this._io = io;
-    io.on('connection', async (socket: Socket) => {
+    io.on('connection', async (socket: Socket): Promise<void> => {
       try {
         const socketEventHandler: SocketEventHandler = new SocketEventHandler();
 
@@ -55,11 +55,12 @@ export default class SocketConnector {
     });
   }
 
-  private static _handleEvents(socket: Socket) {
+  private static _handleEvents(socket: Socket): void {
     const socketEventHandler: SocketEventHandler = new SocketEventHandler();
 
-    socket.on('event', async (socketRequest: SocketRequest) => {
+    socket.on('event', async (socketRequest: SocketRequest): Promise<void> => {
       try {
+        //handle all events
         await this._processEvents(socketRequest);
       } catch (error) {
         const customError: CustomError = CustomError.getCustomErrorObject(error);
@@ -67,7 +68,8 @@ export default class SocketConnector {
       }
     });
 
-    socket.on(SocketEventEnum.Disconnect, async () => {
+    //handle disconnect event
+    socket.on(SocketEventEnum.Disconnect, async (): Promise<void> => {
       try {
         const socketId: string = socket.id;
         await socketEventHandler.processDisconnectEvent(socketId);
@@ -94,7 +96,7 @@ export default class SocketConnector {
     this._io.to(socketId).emit(eventType, eventRequest);
   }
 
-  private static _checkAndVerifyToken(token?: string) {
+  private static _checkAndVerifyToken(token?: string): JWT_OBJECT {
     if (!token) {
       throw new Error('Token Missing.');
     }
@@ -107,7 +109,7 @@ export default class SocketConnector {
     return decodedToken;
   }
 
-  private static async _processEvents(socketRequest: SocketRequest) {
+  private static async _processEvents(socketRequest: SocketRequest): Promise<void> {
     const socketEventHandler: SocketEventHandler = new SocketEventHandler();
     switch (socketRequest.eventType) {
       case SocketEventEnum.SendMessage: {

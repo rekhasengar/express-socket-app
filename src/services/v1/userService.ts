@@ -22,9 +22,9 @@ export default class UserService {
   }
 
   public async getUserByUserId(userId: string, relations?: Array<string>): Promise<UserModel | null> {
-    const canUseLocalCache = !relations || !relations.length;
+    const canUseLocalCache: boolean = !relations || !relations.length;
     if (canUseLocalCache) {
-      const localCache = LocalCache.get<UserModel>(userId);
+      const localCache: UserModel | undefined = LocalCache.get<UserModel>(userId);
       if (localCache) return localCache;
     }
     const dbUser: UserModel | null = await this._userRepository.getUserByUserId(userId, relations);
@@ -40,9 +40,9 @@ export default class UserService {
   }
 
   public async getUserByEmail(email: string): Promise<UserModel | null> {
-    const localCache = LocalCache.get<UserModel>(email);
+    const localCache: UserModel | undefined = LocalCache.get<UserModel>(email);
     if (localCache) return localCache;
-    const dbUser = await this._userRepository.getUserByEmail(email);
+    const dbUser: UserModel | null = await this._userRepository.getUserByEmail(email);
     if (dbUser) {
       LocalCache.set<UserModel>(email, dbUser, 300);
     }
@@ -109,7 +109,7 @@ export default class UserService {
 
   public async updateUserDetails(updateUserDto: UpdateUserDto): Promise<UpdateUserResponse> {
     const { context, userId, firstName, lastName, email } = updateUserDto;
-    const dbUser = await this.getUserByUserId(userId);
+    const dbUser: UserModel | null = await this.getUserByUserId(userId);
     if (!dbUser) {
       throw CustomError.getNotFoundError(USER_MESSAGES.USER_NOT_FOUND);
     }

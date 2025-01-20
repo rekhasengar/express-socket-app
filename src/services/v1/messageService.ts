@@ -54,7 +54,7 @@ export default class MessageService {
     conversationId: string,
     messageId: string,
     userId: string,
-    relations?: string[],
+    relations?: Array<string>,
   ): Promise<MessageModel | null> {
     return await this._messageRepository.getMessageByConversationIdMessageIdAndUserId(
       conversationId,

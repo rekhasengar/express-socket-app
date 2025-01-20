@@ -17,7 +17,14 @@ import {
   AuthRegisterDto,
   AuthResetPasswordDto,
 } from '@src/dtos/authDto';
-import { AuthLoginResponse, AuthResponse } from '@src/types/response/authResponse';
+import {
+  AuthChangePasswordResponse,
+  AuthForgotPasswordResponse,
+  AuthLoginResponse,
+  AuthLogoutResponse,
+  AuthRegisterResponse,
+  AuthResetPasswordResponse,
+} from '@src/types/response/authResponse';
 
 export default class AuthService {
   private readonly _userService: UserService;
@@ -28,7 +35,7 @@ export default class AuthService {
     this._emailService = new EmailService();
   }
 
-  public async authRegister(authRegisterDto: AuthRegisterDto): Promise<AuthResponse> {
+  public async authRegister(authRegisterDto: AuthRegisterDto): Promise<AuthRegisterResponse> {
     const { firstName, lastName, email, password, context } = authRegisterDto;
     const user: UserModel | null = await this._userService.getUserByEmail(email);
     if (user) {
@@ -76,7 +83,7 @@ export default class AuthService {
     };
   }
 
-  public async userLogout(authLogoutDto: AuthLogoutDto): Promise<AuthResponse> {
+  public async userLogout(authLogoutDto: AuthLogoutDto): Promise<AuthLogoutResponse> {
     const { userId, context } = authLogoutDto;
 
     await this._userService.updateUserByUserId(userId, { isUserLoggedIn: false });
@@ -89,15 +96,15 @@ export default class AuthService {
     };
   }
 
-  public async forgotPassword(authForgotPasswordDto: AuthForgotPasswordDto): Promise<AuthResponse> {
+  public async forgotPassword(authForgotPasswordDto: AuthForgotPasswordDto): Promise<AuthForgotPasswordResponse> {
     const { userId, context } = authForgotPasswordDto;
 
-    const user = await this._userService.getUserByUserId(userId);
+    const user: UserModel | null = await this._userService.getUserByUserId(userId);
     if (!user) {
       throw CustomError.getNotFoundError(USER_MESSAGES.USER_NOT_FOUND);
     }
 
-    const token = randomBytes(6).toString('hex');
+    const token: string = randomBytes(6).toString('hex');
     const emailInfo = {
       to: user.email,
       subject: 'Reset Your Password',
@@ -117,10 +124,10 @@ export default class AuthService {
     };
   }
 
-  public async resetPassword(authResetPasswordDto: AuthResetPasswordDto): Promise<AuthResponse> {
+  public async resetPassword(authResetPasswordDto: AuthResetPasswordDto): Promise<AuthResetPasswordResponse> {
     const { token, newPassword, context } = authResetPasswordDto;
 
-    const user = await this._userService.getUserByResetPasswordToken(token);
+    const user: UserModel | null = await this._userService.getUserByResetPasswordToken(token);
     if (!user) {
       throw CustomError.getNotFoundError(USER_MESSAGES.USER_NOT_FOUND);
     }
@@ -135,15 +142,15 @@ export default class AuthService {
     };
   }
 
-  public async changePassword(authChangedPasswordDto: AuthChangedPasswordDto): Promise<AuthResponse> {
+  public async changePassword(authChangedPasswordDto: AuthChangedPasswordDto): Promise<AuthChangePasswordResponse> {
     const { oldPassword, newPassword, userId, context } = authChangedPasswordDto;
 
-    const user = await this._userService.getUserByUserId(userId);
+    const user: UserModel | null = await this._userService.getUserByUserId(userId);
     if (!user) {
       throw CustomError.getNotFoundError(USER_MESSAGES.USER_NOT_FOUND);
     }
 
-    const isPasswordMatched = await this._comparePassword(user.password, oldPassword);
+    const isPasswordMatched: boolean = await this._comparePassword(user.password, oldPassword);
     if (!isPasswordMatched) {
       throw CustomError.getUnauthorizedError(AUTH_MESSAGES.INVALID_CREDENTIALS);
     }

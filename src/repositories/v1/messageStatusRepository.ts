@@ -1,6 +1,7 @@
+import { Repository } from 'typeorm';
+
 import { MessageStatusModel } from '@src/database/mysql/models/messageStatusModel';
 import { AppDataSource } from '@src/database/mysql/typeormConfig';
-import { Repository } from 'typeorm';
 
 export class MessageStatusRepository {
   private _messageStatusModel: Repository<MessageStatusModel>;

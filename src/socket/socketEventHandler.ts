@@ -84,7 +84,7 @@ export default class SocketEventHandler {
     SocketEventHandler.emitEventToUsers(users, senderId, SocketEventEnum.ReceiveMessage, receiveMessageRequest);
 
     //Saving message status in the database.
-    const messageStatusModel = new MessageStatusModel();
+    const messageStatusModel: MessageStatusModel = new MessageStatusModel();
     messageStatusModel.messageKey = savedMessage.key;
     messageStatusModel.userKey = dbUser.key;
     messageStatusModel.status = MessageStatusEnum.SENT;
@@ -141,7 +141,7 @@ export default class SocketEventHandler {
     const dbUsers: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(conversationIds, [
       'sockets',
     ]);
-    const users = dbUsers.filter((user: UserModel): boolean => user.id !== userId);
+    const users: Array<UserModel> = dbUsers.filter((user: UserModel): boolean => user.id !== userId);
     SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.UserStatus, {
       userId,
       status: UserStatusEnum.ONLINE,
@@ -161,7 +161,6 @@ export default class SocketEventHandler {
     );
 
     const [users] = await Promise.all([
-      //we need to fetch unique users only
       this._userService.getLoggedInUsersByConversationIds(conversationIds, ['sockets']),
       this._socketService.removeSocket(socketId),
     ]);
@@ -222,7 +221,7 @@ export default class SocketEventHandler {
     );
     this._validateAdminMember(adminMember);
 
-    const userIdsToAddInConversation: string[] = userIds.filter((userId: string): boolean => {
+    const userIdsToAddInConversation: Array<string> = userIds.filter((userId: string): boolean => {
       const conversationMember: ConversationMemberModel | undefined = conversationOldMembers.find(
         (member: ConversationMemberModel): boolean => {
           return member.user.id.toLowerCase() === userId.toLowerCase();
@@ -234,11 +233,11 @@ export default class SocketEventHandler {
       return;
     }
 
-    const usersToAddInConversation: UserModel[] = await this._userService.getAllUserByUserIds(
+    const usersToAddInConversation: Array<UserModel> = await this._userService.getAllUserByUserIds(
       userIdsToAddInConversation,
       ['sockets'],
     );
-    const newConversationMemberModels: ConversationMemberModel[] = [];
+    const newConversationMemberModels: Array<ConversationMemberModel> = [];
     const userRoleKey: number = getRoleKeyByName(RolesEnum.USER);
     for (const userToAddInConversation of usersToAddInConversation) {
       const newConversationMemberModel = new ConversationMemberModel();
@@ -250,7 +249,7 @@ export default class SocketEventHandler {
     await this._conversationMemberService.insertConversationMembers(newConversationMemberModels);
 
     //sending event to old users that new user added.
-    const conversationOldUsers: UserModel[] = conversationOldMembers.map(
+    const conversationOldUsers: Array<UserModel> = conversationOldMembers.map(
       (oldMember: ConversationMemberModel): UserModel => oldMember.user,
     );
     SocketEventHandler.emitEventToUsers(conversationOldUsers, adminId, SocketEventEnum.AddUserInGroup, {
@@ -314,7 +313,7 @@ export default class SocketEventHandler {
       );
     conversation = this._validateConversation(conversation);
 
-    const conversationMembers = conversation.members;
+    const conversationMembers: Array<ConversationMemberModel> = conversation.members;
     let adminMember: ConversationMemberModel | undefined, userMember: ConversationMemberModel | undefined;
     for (const conversationMember of conversationMembers) {
       const conversationMemberUser = conversationMember.user;

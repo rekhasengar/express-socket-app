@@ -99,7 +99,7 @@ export default class ConversationService {
 
     const conversations: Array<ConversationModel> = user.conversationMembers.map(
       (conversationMember: ConversationMemberModel): ConversationModel => {
-        const conversation = conversationMember.conversation;
+        const conversation: ConversationModel = conversationMember.conversation;
         conversation.members = conversation.members.filter(
           (member: ConversationMemberModel): boolean => member.user.id.toLowerCase() !== userId.toLowerCase(),
         );
@@ -131,12 +131,13 @@ export default class ConversationService {
     const { conversationId } = getConversationDto;
     let { userId } = getConversationDto;
     userId = userId.toLowerCase();
-    const conversation = await this._conversationRepository.getConversationByConversationIdForApi(conversationId);
+    const conversation: ConversationModel | null =
+      await this._conversationRepository.getConversationByConversationIdForApi(conversationId);
     if (!conversation) {
       throw CustomError.getNotFoundError(CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
     }
     if (!conversation.isGroupChat) {
-      const secondMember = conversation.members.find(
+      const secondMember: ConversationMemberModel | undefined = conversation.members.find(
         (member: ConversationMemberModel): boolean => member.user.id.toLowerCase() != userId,
       );
       if (secondMember) {

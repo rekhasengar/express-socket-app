@@ -21,7 +21,14 @@ import {
   AuthRegisterRequest,
   AuthResetPasswordRequest,
 } from '@src/types/request/authRequest';
-import { AuthLoginResponse, AuthResponse } from '@src/types/response/authResponse';
+import {
+  AuthChangePasswordResponse,
+  AuthForgotPasswordResponse,
+  AuthLoginResponse,
+  AuthLogoutResponse,
+  AuthRegisterResponse,
+  AuthResetPasswordResponse,
+} from '@src/types/response/authResponse';
 
 export default class AuthController {
   private readonly _authService: AuthService;
@@ -31,14 +38,14 @@ export default class AuthController {
   }
 
   public async authRegister(
-    req: Request<EmptyObject, AuthResponse, AuthRegisterRequest, EmptyObject>,
-    res: Response<ApiResponse<AuthResponse>>,
+    req: Request<EmptyObject, AuthRegisterResponse, AuthRegisterRequest, EmptyObject>,
+    res: Response<ApiResponse<AuthRegisterResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response: ApiResponse<AuthResponse> = new ApiResponse<AuthResponse>();
+    const response: ApiResponse<AuthRegisterResponse> = new ApiResponse<AuthRegisterResponse>();
     try {
       const authRegisterDto: AuthRegisterDto = new AuthRegisterDto(req.body, req.context);
-      const responseFromService: AuthResponse = await this._authService.authRegister(authRegisterDto);
+      const responseFromService: AuthRegisterResponse = await this._authService.authRegister(authRegisterDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
@@ -69,74 +76,76 @@ export default class AuthController {
   }
 
   public async authLogout(
-    req: CustomRequest<EmptyObject, AuthResponse, EmptyObject, EmptyObject>,
-    res: Response<ApiResponse<AuthResponse>>,
+    req: CustomRequest<EmptyObject, AuthLogoutResponse, EmptyObject, EmptyObject>,
+    res: Response<ApiResponse<AuthLogoutResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<AuthResponse>();
+    const response: ApiResponse<AuthLogoutResponse> = new ApiResponse<AuthLogoutResponse>();
 
     try {
       const authLogoutDto: AuthLogoutDto = new AuthLogoutDto(req.app.locals.userId, req.context);
-      const responseFromService = await this._authService.userLogout(authLogoutDto);
+      const responseFromService: AuthLogoutResponse = await this._authService.userLogout(authLogoutDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }
 
   public async authForgotPassword(
-    req: CustomRequest<EmptyObject, AuthResponse, EmptyObject, EmptyObject>,
-    res: Response<ApiResponse<AuthResponse>>,
+    req: CustomRequest<EmptyObject, AuthForgotPasswordResponse, EmptyObject, EmptyObject>,
+    res: Response<ApiResponse<AuthForgotPasswordResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<AuthResponse>();
+    const response: ApiResponse<AuthForgotPasswordResponse> = new ApiResponse<AuthForgotPasswordResponse>();
 
     try {
       const authForgotPasswordDto: AuthForgotPasswordDto = new AuthForgotPasswordDto(
         req.app.locals.userId,
         req.context,
       );
-      const responseFromService = await this._authService.forgotPassword(authForgotPasswordDto);
+      const responseFromService: AuthForgotPasswordResponse =
+        await this._authService.forgotPassword(authForgotPasswordDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }
 
   public async authResetPassword(
-    req: CustomRequest<EmptyObject, AuthResponse, AuthResetPasswordRequest, EmptyObject>,
-    res: Response<ApiResponse<AuthResponse>>,
+    req: CustomRequest<EmptyObject, AuthResetPasswordResponse, AuthResetPasswordRequest, EmptyObject>,
+    res: Response<ApiResponse<AuthResetPasswordResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<AuthResponse>();
+    const response = new ApiResponse<AuthResetPasswordResponse>();
 
     try {
       const authResetPasswordDto: AuthResetPasswordDto = new AuthResetPasswordDto(req.body, req.context);
-      const responseFromService = await this._authService.resetPassword(authResetPasswordDto);
+      const responseFromService: AuthResetPasswordResponse =
+        await this._authService.resetPassword(authResetPasswordDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }
 
   public async authChangePassword(
-    req: CustomRequest<EmptyObject, AuthResponse, AuthChangePasswordRequest, EmptyObject>,
-    res: Response<ApiResponse<AuthResponse>>,
+    req: CustomRequest<EmptyObject, AuthChangePasswordResponse, AuthChangePasswordRequest, EmptyObject>,
+    res: Response<ApiResponse<AuthChangePasswordResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<AuthResponse>();
+    const response: ApiResponse<AuthChangePasswordResponse> = new ApiResponse<AuthChangePasswordResponse>();
 
     try {
       const authChangedPasswordDto: AuthChangedPasswordDto = new AuthChangedPasswordDto(
@@ -144,13 +153,14 @@ export default class AuthController {
         req.app.locals.userId,
         req.context,
       );
-      const responseFromService = await this._authService.changePassword(authChangedPasswordDto);
+      const responseFromService: AuthChangePasswordResponse =
+        await this._authService.changePassword(authChangedPasswordDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }

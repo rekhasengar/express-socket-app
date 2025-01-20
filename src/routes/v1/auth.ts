@@ -6,7 +6,14 @@ import { doValidation } from '@src/helpers/joiValidator';
 import AuthSchema from '@src/helpers/joiValidator/schemas/auth';
 import AuthController from '@src/controllers/v1/authController';
 import { checkToken } from '@src/middlewares/checkToken';
-import { AuthResponse } from '@src/types/response/authResponse';
+import {
+  AuthChangePasswordResponse,
+  AuthForgotPasswordResponse,
+  AuthLoginResponse,
+  AuthLogoutResponse,
+  AuthRegisterResponse,
+  AuthResetPasswordResponse,
+} from '@src/types/response/authResponse';
 import {
   AuthChangePasswordRequest,
   AuthLoginRequest,
@@ -17,7 +24,7 @@ import {
 const authRoute = Router();
 const authController = new AuthController();
 
-authRoute.post<PathParams, AuthResponse, AuthRegisterRequest, QueryParams>(
+authRoute.post<PathParams, AuthRegisterResponse, AuthRegisterRequest, QueryParams>(
   '/register',
   doValidation(AuthSchema.AuthRegisterRequest),
   (...args) => {
@@ -25,7 +32,7 @@ authRoute.post<PathParams, AuthResponse, AuthRegisterRequest, QueryParams>(
   },
 );
 
-authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthLoginRequest>, QueryParams>(
+authRoute.post<PathParams, ResponseBody<AuthLoginResponse>, RequestBody<AuthLoginRequest>, QueryParams>(
   '/login',
   doValidation(AuthSchema.AuthLoginRequest),
   (...args) => {
@@ -33,11 +40,15 @@ authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthLoginRequ
   },
 );
 
-authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody, QueryParams>('/logout', checkToken, (...args) => {
-  authController.authLogout(...args);
-});
+authRoute.post<PathParams, ResponseBody<AuthLogoutResponse>, RequestBody, QueryParams>(
+  '/logout',
+  checkToken,
+  (...args) => {
+    authController.authLogout(...args);
+  },
+);
 
-authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody, QueryParams>(
+authRoute.post<PathParams, ResponseBody<AuthForgotPasswordResponse>, RequestBody, QueryParams>(
   '/password-forgot',
   checkToken,
   (...args) => {
@@ -45,7 +56,7 @@ authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody, QueryParams>
   },
 );
 
-authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthResetPasswordRequest>, QueryParams>(
+authRoute.post<PathParams, ResponseBody<AuthResetPasswordResponse>, RequestBody<AuthResetPasswordRequest>, QueryParams>(
   '/password-reset',
   doValidation(AuthSchema.AuthResetPasswordRequest),
   (...args) => {
@@ -53,13 +64,13 @@ authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthResetPass
   },
 );
 
-authRoute.post<PathParams, ResponseBody<AuthResponse>, RequestBody<AuthChangePasswordRequest>, QueryParams>(
-  '/password-change',
-  checkToken,
-  doValidation(AuthSchema.AuthChangedPasswordRequest),
-  (...args) => {
-    authController.authChangePassword(...args);
-  },
-);
+authRoute.post<
+  PathParams,
+  ResponseBody<AuthChangePasswordResponse>,
+  RequestBody<AuthChangePasswordRequest>,
+  QueryParams
+>('/password-change', checkToken, doValidation(AuthSchema.AuthChangedPasswordRequest), (...args) => {
+  authController.authChangePassword(...args);
+});
 
 module.exports = { router: authRoute, basePath: API_ROUTES.AUTH };
