@@ -3,11 +3,11 @@ import HttpStatusCode from 'http-status-codes';
 import { TypeORMError } from 'typeorm';
 import { AxiosError } from 'axios';
 
-import { ErrorResponseBody } from './apiErrorResponseBody';
 import { ApiResponse } from './apiResponse';
 import { INTERNAL_SERVER_ERROR, SOMETHING_WENT_WRONG } from '@src/config/messages/codes';
 import { ErrorItem } from '../types/apiErrorRequestType';
 import { HTTP_STATUS_MESSAGE } from '@src/constants/messages';
+import ErrorResponseBody from '../types/errorResponseBody';
 
 export default class CustomError extends Error {
   public status: number;

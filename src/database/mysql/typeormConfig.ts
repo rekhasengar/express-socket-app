@@ -34,7 +34,7 @@ export const AppDataSource = new DataSource({
   logging: false,
   logger: 'debug', // `DEBUG=typeorm:* yarn <COMMAND>`
   entities: ENTITIES,
-  migrations: ['src/database/mysql/migrations/*.ts'], //Require full path for migration run from src
+  migrations: ['src/database/mysql/migrations/*.ts'], //this path for migration run from src
   extra: {
     waitForConnections: true,
     connectionLimit: 10,

@@ -1,8 +1,8 @@
 import HttpStatus from 'http-status-codes';
 
-import { ErrorResponseBody } from './apiErrorResponseBody';
 import { INTERNAL_SERVER_ERROR } from '@src/config/messages/codes';
 import EmptyObject from '@src/types/request/emptyObject';
+import ErrorResponseBody from '../types/errorResponseBody';
 
 export class ApiResponse<T = EmptyObject> {
   public status: number = HttpStatus.BAD_REQUEST;

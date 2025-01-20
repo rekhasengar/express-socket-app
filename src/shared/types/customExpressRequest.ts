@@ -16,7 +16,6 @@ export type CustomRequestHandler<
   Query = EmptyObject,
 > = RequestHandler<Path, ApiResponse<ResBody>, ReqBody, Query>;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export default interface CustomRequest<
   Path = EmptyObject,
   ResBody = EmptyObject,

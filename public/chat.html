@@ -230,6 +230,23 @@
         socket.on('receiveMessage', (data) => {
           console.log('Messages received event got successfully.', data);
           displayMessage(data.message.message, 'received');
+
+          const deliveredMessageStatusPayload = {
+            data: {
+              eventType: 'messageStatus',
+              socketId: socket.id,
+              data: {
+                conversationId: data.conversationId,
+                userId: userId,
+                messageId: data.message.id,
+                status: 'delivered',
+                timestamp: new Date().getTime(),
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              },
+            },
+          };
+
+          socket.emit('event', deliveredMessageStatusPayload);
         });
 
         socket.on('userLeftGroup', (data) => {

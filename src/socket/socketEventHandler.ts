@@ -94,7 +94,8 @@ export default class SocketEventHandler {
   }
 
   public async processMessagesStatusEvent(messageStatusEventRequest: MessageStatusEventRequest): Promise<void> {
-    const { conversationId, userId, messageId, status, timestamp, timezone } = messageStatusEventRequest;
+    const { conversationId, userId, messageId, timestamp, timezone } = messageStatusEventRequest;
+    let { status } = messageStatusEventRequest;
 
     const dbMessage: MessageModel | null = await this._messageService.getMessageByConversationIdMessageIdAndUserId(
       conversationId,
@@ -110,11 +111,11 @@ export default class SocketEventHandler {
     let dbUser: UserModel | undefined = dbMessage.conversation?.members[0]?.user;
     dbUser = this._validateUserModel(dbUser);
 
-    //saving message status.
+    //saving  delivered message status.
     const messageStatusModel: MessageStatusModel = new MessageStatusModel();
     messageStatusModel.messageKey = dbMessage.key;
     messageStatusModel.userKey = dbUser.key;
-    messageStatusModel.status = status;
+    messageStatusModel.status = status as MessageStatusEnum;
     messageStatusModel.timestamp = timestamp;
     messageStatusModel.timezone = timezone;
     await this._messageStatusService.insertMessageStatus(messageStatusModel);
@@ -122,7 +123,22 @@ export default class SocketEventHandler {
       [conversationId],
       ['sockets'],
     );
-    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.MessageStatus, messageStatusEventRequest);
+    status = MessageStatusEnum.READ;
+    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.MessageStatus, {
+      conversationId,
+      userId,
+      messageId,
+      status,
+      timestamp,
+      timezone,
+    });
+    const messageReadStatusModel: MessageStatusModel = new MessageStatusModel();
+    messageStatusModel.messageKey = dbMessage.key;
+    messageStatusModel.userKey = dbUser.key;
+    messageStatusModel.status = status as MessageStatusEnum;
+    messageStatusModel.timestamp = timestamp;
+    messageStatusModel.timezone = timezone;
+    await this._messageStatusService.insertMessageStatus(messageReadStatusModel);
   }
 
   public async processConnectEvent(socketId: string): Promise<void> {
@@ -137,7 +153,7 @@ export default class SocketEventHandler {
       },
     );
 
-    const userId = user.id;
+    const userId: string = user.id;
     const dbUsers: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(conversationIds, [
       'sockets',
     ]);

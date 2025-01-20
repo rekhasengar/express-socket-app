@@ -19,7 +19,3 @@ export class ApiErrorResponseBody {
     }
   }
 }
-
-export type ErrorResponseBody = {
-  errors: Array<ErrorItem>;
-};

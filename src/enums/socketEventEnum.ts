@@ -6,8 +6,8 @@ enum SocketEventEnum {
 
   //common event.
   MessageStatus = 'messageStatus',
-  DeleteMessage = 'deleteMessage', //need to discuss with sir.
-  UserStatus = 'userStatus', //need to handle in the backend.
+  DeleteMessage = 'deleteMessage',
+  UserStatus = 'userStatus',
   RemoveUserFromGroup = 'removeUserFromGroup',
   AddUserInGroup = 'addUserInGroup',
   LeaveGroup = 'leaveGroup',

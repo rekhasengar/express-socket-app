@@ -5,4 +5,4 @@ export type MessageQueryRequest = {
 
 export type MessagePathRequest = {
   conversationId: string;
-};
+} & MessageQueryRequest;

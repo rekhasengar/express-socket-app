@@ -35,6 +35,6 @@ export default async function processRoleSeeder(): Promise<void> {
     roleModels.push(roleModel);
   }
 
-  const roleRepository = new RoleRepository();
+  const roleRepository: RoleRepository = new RoleRepository();
   await roleRepository.addOrUpdateRoles(roleModels);
 }

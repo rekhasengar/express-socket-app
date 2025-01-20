@@ -1,7 +1,7 @@
 import { CustomRequestHandler } from '@src/shared/types/customExpressRequest';
-import expressValidation from './validate';
 import { JoiRequestModel } from './joiRequest';
 import EmptyObject from '@src/types/request/emptyObject';
+import expressValidation from '@src/privateLibs/swagger-generator-express/validation/validate';
 
 export function doValidation<ReqBody, QueryParams, PathParams, Headers>(
   params: JoiRequestModel<ReqBody, QueryParams, PathParams, Headers>,

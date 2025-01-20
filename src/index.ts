@@ -53,7 +53,7 @@ const io = new Server(httpServer, {
 });
 SocketConnector.initialize(io);
 
-(async () => {
+(async (): Promise<void> => {
   try {
     await AppDataSource.initialize();
     await processRoleSeeder();
@@ -104,7 +104,7 @@ const swaggerOptions = {
 const port = serverConfig.port || constants.PORT;
 
 // Middleware to initialize request context
-app.use((req: Request, _res: Response, next: NextFunction) => {
+app.use((req: Request, _res: Response, next: NextFunction): void => {
   req.context = new RequestContext(req);
   let locale =
     (req.headers['Accept-Language'] as string) || (req.headers['accept-language'] as string) || DEFAULT_LOCALE;
@@ -114,14 +114,14 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 //Checking server health.
-app.get('/', (_req: Request, res: Response, _next: NextFunction) => {
+app.get('/', (_req: Request, res: Response, _next: NextFunction): void => {
   res.status(httpStatusCode.OK).send({ message: constants.SERVER_WELCOME_MESSAGE });
 });
 
 //v1 api router.
 app.use('/api', v1Router);
 
-const server = httpServer.listen(port, () => {
+const server = httpServer.listen(port, (): void => {
   console.info(`Started on port : ${port}`);
 });
 
@@ -132,12 +132,12 @@ swagger.serveSwagger(app, '/swagger', swaggerOptions, {
   responseModelFolderName: 'responseModels',
 });
 
-app.all('*', (_req: Request, res: Response, _next: NextFunction) => {
+app.all('*', (_req: Request, res: Response, _next: NextFunction): void => {
   res.status(httpStatusCode.NOT_FOUND).send(constants.ROUTE_NOT_FOUND);
 });
 
 // error handler middleware
-app.use(function (err: CustomError, req: Request, res: Response, _next: NextFunction) {
+app.use(function (err: CustomError, req: Request, res: Response, _next: NextFunction): void {
   const context = req.context;
   const customError = <CustomError>{
     status: err.status,
