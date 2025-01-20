@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import httpStatusCode from 'http-status-codes';
 import swagger from 'express-joi-swagger-spec';
+import responseTime from 'response-time';
 // import blockedAt from 'blocked-at';
 
 import RequestContext from './helpers/context';
@@ -28,6 +29,7 @@ app.use(cors());
 
 // request payload middleware
 app.use(express.json());
+app.use(responseTime());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 

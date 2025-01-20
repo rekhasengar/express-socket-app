@@ -123,22 +123,7 @@ export default class SocketEventHandler {
       [conversationId],
       ['sockets'],
     );
-    status = MessageStatusEnum.READ;
-    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.MessageStatus, {
-      conversationId,
-      userId,
-      messageId,
-      status,
-      timestamp,
-      timezone,
-    });
-    const messageReadStatusModel: MessageStatusModel = new MessageStatusModel();
-    messageStatusModel.messageKey = dbMessage.key;
-    messageStatusModel.userKey = dbUser.key;
-    messageStatusModel.status = status as MessageStatusEnum;
-    messageStatusModel.timestamp = timestamp;
-    messageStatusModel.timezone = timezone;
-    await this._messageStatusService.insertMessageStatus(messageReadStatusModel);
+    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.MessageStatus, messageStatusEventRequest);
   }
 
   public async processConnectEvent(socketId: string): Promise<void> {
