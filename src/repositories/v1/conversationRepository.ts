@@ -41,7 +41,7 @@ export default class ConversationRepository {
         },
       },
       where: { id: conversationId },
-      relations: ['members', 'members.user'],
+      relations: ['members', 'members.role', 'members.user'],
     });
   }
 
@@ -95,32 +95,6 @@ export default class ConversationRepository {
         },
       },
       relations: ['messages', 'messages.sender'],
-    });
-  }
-
-  public async getConversationUsersByConversationIdForApi(conversationId: string): Promise<ConversationModel | null> {
-    return await this._conversationModel.findOne({
-      where: {
-        id: conversationId,
-      },
-      select: {
-        id: true,
-        key: true,
-        members: {
-          key: true,
-          user: {
-            key: true,
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-          role: {
-            key: true,
-            name: true,
-          },
-        },
-      },
-      relations: ['members', 'members.role', 'members.user'],
     });
   }
 }

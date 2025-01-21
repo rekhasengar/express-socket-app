@@ -11,4 +11,8 @@ export default class MessageStatusService {
   public async insertMessageStatus(messageStatusModel: MessageStatusModel): Promise<void> {
     await this._messageStatusRepository.insertMessageStatus(messageStatusModel);
   }
+
+  public async deleteMessageStatusByMessageKey(messageKey: number): Promise<void> {
+    await this._messageStatusRepository.deleteMessageStatusByMessageKey(messageKey);
+  }
 }

@@ -64,6 +64,20 @@ export default class MessageService {
     );
   }
 
+  public async getMessageByConversationIdMessageIdAndSenderId(
+    conversationId: string,
+    messageId: string,
+    senderId: string,
+    relations?: Array<string>,
+  ): Promise<MessageModel | null> {
+    return await this._messageRepository.getMessageByConversationIdMessageIdAndSenderId(
+      conversationId,
+      messageId,
+      senderId,
+      relations,
+    );
+  }
+
   public async deleteUserMessageByMessageId(messageId: string): Promise<void> {
     await this._messageRepository.deleteUserMessageByMessageId(messageId);
   }

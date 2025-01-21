@@ -12,22 +12,12 @@ import {
 import { CONTROLLER_MESSAGE } from '@src/constants/messages';
 import CustomError from '@src/shared/errorHandler/customError';
 import ConversationService from '@service/v1/conversationService';
-import {
-  CreateConversationRequest,
-  GetConversationPathParams,
-  GetConversationUserPathParamsRequest,
-} from '@src/types/request/conversationRequest';
-import {
-  CreateConversationDto,
-  GetConversationDto,
-  GetConversationMessageDto,
-  GetConversationUsersDto,
-} from '@src/dtos/conversationDto';
+import { CreateConversationRequest, GetConversationPathParams } from '@src/types/request/conversationRequest';
+import { CreateConversationDto, GetConversationDto, GetConversationMessageDto } from '@src/dtos/conversationDto';
 import EmptyObject from '@src/types/request/emptyObject';
 import { MessagePathRequest, MessageQueryRequest } from '@src/types/request/messageRequest';
 import MessageDto from '@src/dtos/messageDto';
 import MessageService from '@service/v1/messageService';
-import { GetConversationUserResponse } from '@src/types/response/userResponse';
 
 export default class ConversationController {
   private readonly _conversationService: ConversationService;
@@ -123,26 +113,6 @@ export default class ConversationController {
       );
       const responseFromService: GetConversationResponse =
         await this._conversationService.getConversation(getConversationDto);
-      response.status = HttpStatusCode.OK;
-      response.message = CONTROLLER_MESSAGE.SUCCESS;
-      response.body = responseFromService;
-      res.status(response.status).send(response);
-    } catch (error) {
-      const customError: CustomError = CustomError.getCustomErrorObject(error);
-      return next(customError);
-    }
-  }
-
-  public async getConversationUsersByConversationId(
-    req: CustomRequest<GetConversationUserPathParamsRequest, GetConversationUserResponse, EmptyObject, EmptyObject>,
-    res: Response<ApiResponse<GetConversationUserResponse>>,
-    next: NextFunction,
-  ): Promise<void> {
-    const response = new ApiResponse<GetConversationUserResponse>();
-    try {
-      const getConversationUsersDto: GetConversationUsersDto = new GetConversationUsersDto(req.params, req.context);
-      const responseFromService: GetConversationUserResponse =
-        await this._conversationService.getConversationUsersByConversationId(getConversationUsersDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;

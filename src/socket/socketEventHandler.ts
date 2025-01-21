@@ -377,13 +377,20 @@ export default class SocketEventHandler {
   public async processDeleteMessageEvent(deleteMessageSenderEventRequest: DeleteMessageSenderEventRequest) {
     const { conversationId, userId, messageId } = deleteMessageSenderEventRequest;
 
-    const conversation: ConversationModel | null =
-      await this._conversationService.getConversationByConversationIdAndUserIdAndMessageId(
-        conversationId,
-        userId,
-        messageId,
+    const message: MessageModel | null = await this._messageService.getMessageByConversationIdMessageIdAndSenderId(
+      conversationId,
+      messageId,
+      userId,
+      ['conversation', 'sender'],
+    );
+
+    if (!message) {
+      throw CustomError.getNotFoundError(
+        CONVERSATION_MESSAGE_MESSAGES.MESSAGE_NOT_FOUND_WITH_CONVERSATION_AND_MESSAGE_ID,
       );
-    this._validateConversation(conversation);
+    }
+
+    await this._messageStatusService.deleteMessageStatusByMessageKey(message.key);
     await this._messageService.deleteUserMessageByMessageId(messageId);
     const users: Array<UserModel> = await this._userService.getLoggedInUsersByConversationIds(
       [conversationId],

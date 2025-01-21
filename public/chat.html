@@ -177,7 +177,7 @@
       // Function to load messages for the conversation
       async function loadMessages() {
         await loadConversation(conversationId);
-        const apiUrl = `http://localhost:3000/api/v1/users/${conversationId}`;
+        const apiUrl = `http://localhost:3000/api/v1/conversations/${conversationId}/messages`;
         try {
           const response = await fetch(apiUrl, {
             method: 'GET',
@@ -234,17 +234,15 @@
           displayMessage(data.message.message, 'received');
 
           const deliveredMessageStatusPayload = {
+            eventType: 'messageStatus',
+            socketId: socket.id,
             data: {
-              eventType: 'messageStatus',
-              socketId: socket.id,
-              data: {
-                conversationId: data.conversationId,
-                userId: userId,
-                messageId: data.message.id,
-                status: 'delivered',
-                timestamp: new Date().getTime(),
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-              },
+              conversationId: data.conversationId,
+              userId: userId,
+              messageId: data.message.id,
+              status: 'delivered',
+              timestamp: new Date().getTime(),
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             },
           };
 
@@ -398,7 +396,6 @@
       });
 
       const updateUserRoleButton = document.getElementById('updateUserRoleBtn');
-
       updateUserRoleButton.addEventListener('click', async () => {
         const conversationId = prompt('Enter conversation ID:');
         const adminId = prompt('Enter admin ID:');

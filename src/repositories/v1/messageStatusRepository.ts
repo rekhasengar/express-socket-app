@@ -13,4 +13,10 @@ export class MessageStatusRepository {
   public async insertMessageStatus(messageStatusModel: MessageStatusModel): Promise<void> {
     await this._messageStatusModel.insert(messageStatusModel);
   }
+
+  public async deleteMessageStatusByMessageKey(messageKey: number): Promise<void> {
+    await this._messageStatusModel.delete({
+      messageKey: messageKey,
+    });
+  }
 }

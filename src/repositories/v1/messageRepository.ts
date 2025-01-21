@@ -85,6 +85,24 @@ export default class MessageRepository {
     });
   }
 
+  public async getMessageByConversationIdMessageIdAndSenderId(
+    conversationId: string,
+    messageId: string,
+    senderId: string,
+    relations?: Array<string>,
+  ): Promise<MessageModel | null> {
+    return await this._messageModel.findOne({
+      where: {
+        id: messageId,
+        conversation: { id: conversationId },
+        sender: {
+          id: senderId,
+        },
+      },
+      relations,
+    });
+  }
+
   public async deleteUserMessageByMessageId(messageId: string): Promise<void> {
     await this._messageModel.delete({ id: messageId });
   }
