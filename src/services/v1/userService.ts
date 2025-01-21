@@ -28,6 +28,7 @@ export default class UserService {
       if (localCache) return localCache;
     }
     const dbUser: UserModel | null = await this._userRepository.getUserByUserId(userId, relations);
+    //rekha: add node cache (in memory cache )
     if (canUseLocalCache && dbUser) {
       LocalCache.set<UserModel>(userId, dbUser, 300);
     }

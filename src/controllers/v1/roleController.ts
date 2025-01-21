@@ -21,16 +21,16 @@ export default class RoleController {
     res: Response<ApiResponse<RoleResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<RoleResponse>();
+    const response: ApiResponse<RoleResponse> = new ApiResponse<RoleResponse>();
 
     try {
-      const responseFromService = await this._roleService.getAllRoles(req.context);
+      const responseFromService: RoleResponse = await this._roleService.getAllRoles(req.context);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }

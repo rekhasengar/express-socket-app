@@ -12,12 +12,22 @@ import {
 import { CONTROLLER_MESSAGE } from '@src/constants/messages';
 import CustomError from '@src/shared/errorHandler/customError';
 import ConversationService from '@service/v1/conversationService';
-import { CreateConversationRequest, GetConversationPathParams } from '@src/types/request/conversationRequest';
-import { CreateConversationDto, GetConversationDto, GetConversationMessageDto } from '@src/dtos/conversationDto';
+import {
+  CreateConversationRequest,
+  GetConversationPathParams,
+  GetConversationUserPathParamsRequest,
+} from '@src/types/request/conversationRequest';
+import {
+  CreateConversationDto,
+  GetConversationDto,
+  GetConversationMessageDto,
+  GetConversationUsersDto,
+} from '@src/dtos/conversationDto';
 import EmptyObject from '@src/types/request/emptyObject';
 import { MessagePathRequest, MessageQueryRequest } from '@src/types/request/messageRequest';
 import MessageDto from '@src/dtos/messageDto';
 import MessageService from '@service/v1/messageService';
+import { GetConversationUserResponse } from '@src/types/response/userResponse';
 
 export default class ConversationController {
   private readonly _conversationService: ConversationService;
@@ -33,17 +43,22 @@ export default class ConversationController {
     res: Response<ApiResponse<CreateConversationResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<CreateConversationResponse>();
+    const response: ApiResponse<CreateConversationResponse> = new ApiResponse<CreateConversationResponse>();
 
     try {
-      const createConversationDto = new CreateConversationDto(req.body, req.app.locals.userId, req.context);
-      const responseFromService = await this._conversationService.createNewConversation(createConversationDto);
+      const createConversationDto: CreateConversationDto = new CreateConversationDto(
+        req.body,
+        req.app.locals.userId,
+        req.context,
+      );
+      const responseFromService: CreateConversationResponse =
+        await this._conversationService.createNewConversation(createConversationDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }
@@ -53,18 +68,22 @@ export default class ConversationController {
     res: Response<ApiResponse<GetConversationsResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<GetConversationsResponse>();
+    const response: ApiResponse<GetConversationsResponse> = new ApiResponse<GetConversationsResponse>();
 
     try {
-      const getConversationMessageDto = new GetConversationMessageDto(req.app.locals.userId, req.context, req.locale);
-      const responseFromService =
+      const getConversationMessageDto: GetConversationMessageDto = new GetConversationMessageDto(
+        req.app.locals.userId,
+        req.context,
+        req.locale,
+      );
+      const responseFromService: GetConversationsResponse =
         await this._conversationService.getAllConversationsByUserId(getConversationMessageDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }
@@ -74,16 +93,17 @@ export default class ConversationController {
     res: Response<ApiResponse<GetConversationMessagesResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<GetConversationMessagesResponse>();
+    const response: ApiResponse<GetConversationMessagesResponse> = new ApiResponse<GetConversationMessagesResponse>();
     try {
-      const messageDto = new MessageDto(req.params, req.query, req.context);
-      const responseFromService = await this._messageService.getUserMessagesByConversationId(messageDto);
+      const messageDto: MessageDto = new MessageDto(req.params, req.query, req.context);
+      const responseFromService: GetConversationMessagesResponse =
+        await this._messageService.getUserMessagesByConversationId(messageDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }
@@ -93,16 +113,42 @@ export default class ConversationController {
     res: Response<ApiResponse<GetConversationResponse>>,
     next: NextFunction,
   ): Promise<void> {
-    const response = new ApiResponse<GetConversationResponse>();
+    const response: ApiResponse<GetConversationResponse> = new ApiResponse<GetConversationResponse>();
     try {
-      const getConversationDto = new GetConversationDto(req.params, req.app.locals.userId, req.context, req.locale);
-      const responseFromService = await this._conversationService.getConversation(getConversationDto);
+      const getConversationDto: GetConversationDto = new GetConversationDto(
+        req.params,
+        req.app.locals.userId,
+        req.context,
+        req.locale,
+      );
+      const responseFromService: GetConversationResponse =
+        await this._conversationService.getConversation(getConversationDto);
       response.status = HttpStatusCode.OK;
       response.message = CONTROLLER_MESSAGE.SUCCESS;
       response.body = responseFromService;
       res.status(response.status).send(response);
     } catch (error) {
-      const customError = CustomError.getCustomErrorObject(error);
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
+      return next(customError);
+    }
+  }
+
+  public async getConversationUsersByConversationId(
+    req: CustomRequest<GetConversationUserPathParamsRequest, GetConversationUserResponse, EmptyObject, EmptyObject>,
+    res: Response<ApiResponse<GetConversationUserResponse>>,
+    next: NextFunction,
+  ): Promise<void> {
+    const response = new ApiResponse<GetConversationUserResponse>();
+    try {
+      const getConversationUsersDto: GetConversationUsersDto = new GetConversationUsersDto(req.params, req.context);
+      const responseFromService: GetConversationUserResponse =
+        await this._conversationService.getConversationUsersByConversationId(getConversationUsersDto);
+      response.status = HttpStatusCode.OK;
+      response.message = CONTROLLER_MESSAGE.SUCCESS;
+      response.body = responseFromService;
+      res.status(response.status).send(response);
+    } catch (error) {
+      const customError: CustomError = CustomError.getCustomErrorObject(error);
       return next(customError);
     }
   }

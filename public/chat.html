@@ -119,7 +119,9 @@
     <button onclick="sendMessage()" class="button">Send</button>
 
     <button id="leaveGroupBtn" class="button">Leave Group</button>
-    <!-- New Leave Group button -->
+    <button id="RemoveUserFromGroupBtn" class="button">Remove User Group</button>
+    <button id="renameGroupBtn" class="button">Rename Group</button>
+    <button id="updateUserRoleBtn" class="button">Update User Role</button>
 
     <script>
       function _getToken() {
@@ -175,7 +177,7 @@
       // Function to load messages for the conversation
       async function loadMessages() {
         await loadConversation(conversationId);
-        const apiUrl = `http://localhost:3000/api/v1/messages/${conversationId}`;
+        const apiUrl = `http://localhost:3000/api/v1/users/${conversationId}`;
         try {
           const response = await fetch(apiUrl, {
             method: 'GET',
@@ -257,6 +259,20 @@
           messagesContainer.appendChild(leaveMessage);
         });
 
+        socket.on('removeUserFromGroup', (data) => {
+          const { conversationId, userId } = data;
+          console.log(`User with ID ${userId} has been removed from conversation ${conversationId}`);
+        });
+
+        socket.on('removeUserFromGroup', (data) => {
+          const { conversationId, userId } = data;
+          console.log(`User with ID ${userId} has been removed from conversation ${conversationId}`);
+        });
+
+        socket.on('renameGroup', (data) => {
+          console.log(`Admin rename group: ${data.groupName}`);
+        });
+
         return socket;
       }
 
@@ -302,7 +318,6 @@
 
       // Add event listener for "Leave Group" button
       const leaveGroupButton = document.getElementById('leaveGroupBtn');
-
       leaveGroupButton.addEventListener('click', () => {
         const userLeaveGroupPayload = {
           eventType: 'leaveGroup',
@@ -319,6 +334,105 @@
         // Optionally close the socket connection and redirect the user to another page
         socket.close();
         window.location.href = '/index.html'; // Redirecting to conversations page
+      });
+
+      const renameGroupButton = document.getElementById('renameGroupBtn');
+      renameGroupButton.addEventListener('click', async () => {
+        const adminId = prompt('Enter the admin ID :');
+        const conversationId = prompt('Enter the conversation ID :');
+        const groupName = prompt('Enter the group name :');
+
+        if (!userId) {
+          alert('User id required!');
+          return;
+        }
+        if (!conversationId) {
+          alert('Conversation id required!');
+          return;
+        }
+        if (!groupName) {
+          alert('Group name required!');
+          return;
+        }
+
+        const renameGroupPayload = {
+          eventType: 'renameGroup',
+          socketId: socket.id,
+          data: {
+            adminId: adminId,
+            conversationId: conversationId,
+            groupName: groupName,
+          },
+        };
+
+        socket.emit('event', renameGroupPayload);
+      });
+
+      const removeUserFromGroupButton = document.getElementById('RemoveUserFromGroupBtn');
+      removeUserFromGroupButton.addEventListener('click', async () => {
+        const userToRemoveId = prompt('Enter user ID:');
+        const conversationId = prompt('Enter conversation ID:');
+        const adminId = prompt('Enter admin ID :');
+        if (!userToRemoveId) {
+          alert('user id required!');
+          return;
+        }
+        if (!conversationId) {
+          alert('conversation id required!');
+          return;
+        }
+        if (!adminId) {
+          alert('admin id required!');
+          return;
+        }
+        const removeUserFromGroupPayload = {
+          eventType: 'removeUserFromGroup',
+          socketId: socket.id,
+          data: {
+            conversationId: conversationId,
+            userId: userToRemoveId,
+            adminId: adminId,
+          },
+        };
+        socket.emit('event', removeUserFromGroupPayload);
+      });
+
+      const updateUserRoleButton = document.getElementById('updateUserRoleBtn');
+
+      updateUserRoleButton.addEventListener('click', async () => {
+        const conversationId = prompt('Enter conversation ID:');
+        const adminId = prompt('Enter admin ID:');
+        const userId = prompt('Enter user ID:');
+        const roleId = prompt('Enter role ID:');
+
+        if (!conversationId) {
+          alert('conversation id required!');
+          return;
+        }
+        if (!adminId) {
+          alert('admin id required!');
+          return;
+        }
+        if (!userId) {
+          alert('user id required!');
+          return;
+        }
+        if (!roleId) {
+          alert('role id required!');
+          return;
+        }
+
+        const updateUserRolePayload = {
+          eventType: 'updateUserRoleInGroup',
+          socketId: socket.id,
+          data: {
+            conversationId: conversationId,
+            userId: userToRemoveId,
+            adminId: adminId,
+          },
+        };
+
+        socket.emit('event', updateUserRolePayload);
       });
 
       loadMessages(); // Initially load the conversation and messages

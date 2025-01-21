@@ -1,3 +1,4 @@
+import { ConversationModel } from '@src/database/mysql/models/conversationModel';
 import { UserModel } from '@src/database/mysql/models/userModel';
 
 export type GetAllUsersResponse = {
@@ -14,4 +15,8 @@ export type UpdateUserResponse = {
 
 export type DeleteUserResponse = {
   message: string;
+};
+
+export type GetConversationUserResponse = {
+  conversation: ConversationModel;
 };

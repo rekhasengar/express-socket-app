@@ -34,6 +34,7 @@ export default class SocketConnector {
         const decodedToken: JWT_OBJECT = this._checkAndVerifyToken(socket.handshake.auth.token);
         const userId: string | number = decodedToken.id;
         const userService: UserService = new UserService();
+        //need to check if we already check user why we are checking every time user
         const dbUser: UserModel | null = await userService.getUserByUserId(userId);
         if (!dbUser) {
           throw new Error('User not found.');

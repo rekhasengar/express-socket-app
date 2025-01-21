@@ -1,5 +1,4 @@
 // import { MessageStatusEnum } from '@src/enums/messageStatusEnum';
-import { MessageStatusEnum } from '@src/enums/messageStatusEnum';
 import SocketEventEnum from '@src/enums/socketEventEnum';
 import UserStatusEnum from '@src/enums/userStatusEnum';
 
@@ -50,7 +49,7 @@ export type MessageStatusEventRequest = {
   conversationId: string;
   userId: string;
   messageId: string;
-  status: MessageStatusEnum;
+  status: string;
   timestamp: number;
   timezone: string;
 };

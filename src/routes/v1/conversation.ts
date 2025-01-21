@@ -8,12 +8,17 @@ import {
   GetConversationResponse,
   GetConversationsResponse,
 } from '@src/types/response/conversationResponse';
-import { CreateConversationRequest, GetConversationPathParams } from '@src/types/request/conversationRequest';
+import {
+  CreateConversationRequest,
+  GetConversationPathParams,
+  GetConversationUserPathParamsRequest,
+} from '@src/types/request/conversationRequest';
 import { checkToken } from '@src/middlewares/checkToken';
 import ConversationSchema from '@src/helpers/joiValidator/schemas/conversation';
 import { doValidation } from '@src/helpers/joiValidator';
 import { MessagePathRequest, MessageQueryRequest } from '@src/types/request/messageRequest';
 import ConversationController from '@src/controllers/v1/conversationController';
+import { GetConversationUserResponse } from '@src/types/response/userResponse';
 
 const conversationRoute = Router();
 
@@ -39,7 +44,7 @@ conversationRoute.get<
   ResponseBody<GetConversationMessagesResponse>,
   RequestBody,
   QueryParams<MessageQueryRequest>
->('/:conversationId', (...args): void => {
+>('/:conversationId/messages', (...args): void => {
   new ConversationController().getUserMessagesByConversationId(...args);
 });
 
@@ -50,6 +55,15 @@ conversationRoute.get<
   QueryParams
 >('/:conversationId', checkToken, (...args): void => {
   new ConversationController().getConversationByConversationId(...args);
+});
+
+conversationRoute.get<
+  PathParams<GetConversationUserPathParamsRequest>,
+  ResponseBody<GetConversationUserResponse>,
+  RequestBody,
+  QueryParams
+>('/users/:conversationId', (...args): void => {
+  new ConversationController().getConversationUsersByConversationId(...args);
 });
 
 module.exports = { router: conversationRoute, basePath: API_ROUTES.CONVERSATIONS };

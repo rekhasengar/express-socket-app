@@ -7,18 +7,17 @@ import {
   GetSingleUserResponse,
   UpdateUserResponse,
 } from '@src/types/response/userResponse';
-import UserController from '@src/controllers/v1/userController';
 import { API_ROUTES } from '@src/constants';
 import { UserUpdateRequest } from '@src/types/request/userRequest';
 import { doValidation } from '@src/helpers/joiValidator';
 import UserSchema from '../../helpers/joiValidator/schemas/user';
 import { checkToken } from '@src/middlewares/checkToken';
+import UserController from '@src/controllers/v1/userController';
 
 const userRoute = Router();
-const userController = new UserController();
 
 userRoute.get<PathParams, ResponseBody<GetAllUsersResponse>, RequestBody, QueryParams>('/', (...args): void => {
-  userController.getAllRegisterUserList(...args);
+  new UserController().getAllRegisterUserList(...args);
 });
 
 userRoute.put<PathParams, ResponseBody<UpdateUserResponse>, RequestBody<UserUpdateRequest>, QueryParams>(
@@ -26,25 +25,25 @@ userRoute.put<PathParams, ResponseBody<UpdateUserResponse>, RequestBody<UserUpda
   checkToken,
   doValidation(UserSchema.UpdateUserRequest),
   (...args): void => {
-    userController.updateUserDetails(...args);
+    new UserController().updateUserDetails(...args);
   },
 );
 
-// decide from where we need to get userId(token/params)
+//decide from where we need to get userId(token/params): currently fetching userId from token
 userRoute.get<PathParams, ResponseBody<GetSingleUserResponse>, RequestBody, QueryParams>(
   '/:userId',
   checkToken,
   (...args): void => {
-    userController.getUser(...args);
+    new UserController().getUser(...args);
   },
 );
 
-//decide from where we need to get userId(token/params)
+//decide from where we need to get userId(token/params): currently fetching userId from token
 userRoute.delete<PathParams, ResponseBody<DeleteUserResponse>, RequestBody, QueryParams>(
   '/:userId',
   checkToken,
   (...args): void => {
-    userController.deleteUser(...args);
+    new UserController().deleteUser(...args);
   },
 );
 

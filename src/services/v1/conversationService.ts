@@ -7,7 +7,12 @@ import {
 } from '@src/types/response/conversationResponse';
 import ConversationRepository from '@src/repositories/v1/conversationRepository';
 import { ConversationModel } from '@src/database/mysql/models/conversationModel';
-import { CreateConversationDto, GetConversationDto, GetConversationMessageDto } from '@src/dtos/conversationDto';
+import {
+  CreateConversationDto,
+  GetConversationDto,
+  GetConversationMessageDto,
+  GetConversationUsersDto,
+} from '@src/dtos/conversationDto';
 import ConversationMemberService from './conversationMemberService';
 import { ConversationMemberModel } from '@src/database/mysql/models/conversationMemberModel';
 import { UserModel } from '@src/database/mysql/models/userModel';
@@ -18,6 +23,7 @@ import RequestContext from '@src/helpers/context';
 import CustomError from '@src/shared/errorHandler/customError';
 import SocketEventHandler from '@src/socket/socketEventHandler';
 import SocketEventEnum from '@src/enums/socketEventEnum';
+import { GetConversationUserResponse } from '@src/types/response/userResponse';
 
 export default class ConversationService {
   private readonly _userService: UserService;
@@ -175,6 +181,26 @@ export default class ConversationService {
       userId,
       messageId,
     );
+  }
+
+  public async getConversationUsersByConversationId(
+    getConversationUsersDto: GetConversationUsersDto,
+  ): Promise<GetConversationUserResponse> {
+    const { conversationId, context } = getConversationUsersDto;
+
+    const conversation: ConversationModel | null =
+      await this._conversationRepository.getConversationUsersByConversationIdForApi(conversationId);
+    if (!conversation) {
+      throw CustomError.getNotFoundError(CONVERSATION_MESSAGES.CONVERSATION_NOT_FOUND);
+    }
+
+    context.logInfo({
+      source: LOGS.GET_SOURCE(ConversationService.name, this.getConversationUsersByConversationId.name),
+      message: CONVERSATION_MESSAGES.CONVERSATION_MESSAGE_FETCHED_SUCCESSFULLY,
+    });
+    return {
+      conversation: conversation,
+    };
   }
 
   private async _createOneToOneConversation(

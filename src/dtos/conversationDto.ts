@@ -3,6 +3,7 @@ import {
   CreateConversationRequest,
   DeleteConversationMessagePathParams,
   GetConversationPathParams,
+  GetConversationUserPathParamsRequest,
 } from '@src/types/request/conversationRequest';
 
 export class CreateConversationDto {
@@ -58,5 +59,15 @@ export class GetConversationDto {
     this.userId = userId;
     this.context = context;
     this.locale = locale;
+  }
+}
+
+export class GetConversationUsersDto {
+  conversationId: string;
+  context: RequestContext;
+
+  constructor(params: GetConversationUserPathParamsRequest, context: RequestContext) {
+    this.conversationId = params.conversationId;
+    this.context = context;
   }
 }
