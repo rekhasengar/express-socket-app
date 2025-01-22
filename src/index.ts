@@ -5,7 +5,7 @@ import { Server } from 'socket.io';
 import httpStatusCode from 'http-status-codes';
 import swagger from 'express-joi-swagger-spec';
 import responseTime from 'response-time';
-// import blockedAt from 'blocked-at';
+import blockedAt from 'blocked-at';
 
 import RequestContext from './helpers/context';
 import { DEFAULT_LOCALE, isProduction, serverConfig, SUPPORTED_LOCALE } from './config';
@@ -35,15 +35,15 @@ app.use(express.static('public'));
 
 // This is usually caused by synchronous operations that delay the event loop, such as long loop , disk I/O, or database operations.
 // AsyncHook.init: This is part of the blocked-at package's internal tracking of asynchronous operations.
-// blockedAt(
-//   (time: any, stack: any, resourceType: any) => {
-//     console.log('+++++++++++++++++++++++++++++++++');
-//     console.info({ message: `Blocked for ${time}ms` });
-//     console.info({ message: `Stack trace:\n${JSON.stringify(stack)}` });
-//     console.info({ message: `Resource type: ${JSON.stringify(resourceType)}` });
-//   },
-//   { threshold: 20 },
-// );
+blockedAt(
+  (time: any, stack: any, resourceType: any) => {
+    console.log('+++++++++++++++++++++++++++++++++');
+    console.info({ message: `Blocked for ${time}ms` });
+    console.info({ message: `Stack trace:\n${JSON.stringify(stack)}` });
+    console.info({ message: `Resource type: ${JSON.stringify(resourceType)}` });
+  },
+  { threshold: 20 },
+);
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
