@@ -124,6 +124,7 @@ export type SocketErrorRequest = {
   name: string;
   status: number;
   message: string;
+  errors: string[] | undefined;
 };
 
 export type SocketErrorEventRequest = {

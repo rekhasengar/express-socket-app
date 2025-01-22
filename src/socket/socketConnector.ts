@@ -81,10 +81,12 @@ export default class SocketConnector {
   }
 
   public static emitErrorEvent(socketId: string, error: CustomError): void {
+    const errorMessages = error.errors && error.errors.length > 0 ? error.errors[0].messages : [];
     const socketErrorRequest: SocketErrorRequest = {
+      name: error.name,
       status: error.status,
       message: error.message,
-      name: error.name,
+      errors: errorMessages,
     };
     const errorEventRequest = {
       error: socketErrorRequest,
