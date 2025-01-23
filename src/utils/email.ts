@@ -1,6 +1,7 @@
+import nodemailer, { Transporter } from 'nodemailer';
+
 import { serverConfig } from '@src/config';
 import { EmailInfo } from '@src/types/email';
-import nodemailer, { Transporter } from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 export default class EmailService {
@@ -11,12 +12,12 @@ export default class EmailService {
   constructor() {
     // create reusable transporter object using the default SMTP transport
     this.transporter = nodemailer.createTransport({
-      host: serverConfig.emailHost,
+      host: serverConfig.EMAIL_HOST,
       port: 587,
       secure: false, // true for 465, false for other ports
       auth: {
-        user: serverConfig.emailUser || EmailService.username,
-        pass: serverConfig.emailPass || EmailService.password,
+        user: serverConfig.EMAIL_USER || EmailService.username,
+        pass: serverConfig.EMAIL_PASSWORD || EmailService.password,
       },
     });
   }

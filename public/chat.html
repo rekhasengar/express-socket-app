@@ -122,6 +122,7 @@
     <button id="RemoveUserFromGroupBtn" class="button">Remove User Group</button>
     <button id="renameGroupBtn" class="button">Rename Group</button>
     <button id="updateUserRoleBtn" class="button">Update User Role</button>
+    <button id="deleteMessageBtn" class="button">Delete Single Message</button>
 
     <script>
       function _getToken() {
@@ -423,13 +424,46 @@
           eventType: 'updateUserRoleInGroup',
           socketId: socket.id,
           data: {
-            conversationId: conversationId,
-            userId: userToRemoveId,
             adminId: adminId,
+            userId: userId,
+            roleId: roleId,
+            conversationId: conversationId,
           },
         };
 
         socket.emit('event', updateUserRolePayload);
+      });
+
+      const deleteMessageButton = document.getElementById('deleteMessageBtn');
+      deleteMessageButton.addEventListener('click', async () => {
+        const conversationId = prompt('Enter conversation ID:');
+        const userId = prompt('Enter user ID:');
+        const messageId = prompt('Enter message ID:');
+
+        if (!conversationId) {
+          alert('conversation id required!');
+          return;
+        }
+        if (!userId) {
+          alert('user id required!');
+          return;
+        }
+        if (!messageId) {
+          alert('message id required!');
+          return;
+        }
+
+        const deleteMessagePayload = {
+          eventType: 'deleteMessage',
+          socketId: socket.id,
+          data: {
+            messageId: messageId,
+            userId: userId,
+            conversationId: messageId,
+          },
+        };
+
+        socket.emit('event', deleteMessagePayload);
       });
 
       loadMessages(); // Initially load the conversation and messages

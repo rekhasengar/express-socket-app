@@ -68,7 +68,7 @@ export default class ConversationService {
 
     users.push(admin);
     let conversation: ConversationModel;
-    if ((isGroupChat && users.length > 1) || users.length > 1) {
+    if ((isGroupChat && users.length > 2) || users.length > 2) {
       conversation = await this._createGroupConversation(users, admin, groupName, context);
     } else {
       conversation = await this._createOneToOneConversation(users, admin, context);

@@ -396,7 +396,7 @@ export default class SocketEventHandler {
       [conversationId],
       ['sockets'],
     );
-    SocketEventHandler.emitEventToUsers(users, userId, SocketEventEnum.DeleteMessage, {
+    SocketEventHandler.emitEventToUsers(users, '', SocketEventEnum.DeleteMessage, {
       conversationId,
       messageId,
     });

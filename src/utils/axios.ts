@@ -5,7 +5,7 @@ export class AxiosUtils {
   private async request<T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     const axiosResponse = await axios.request<T>({
       ...config,
-      timeout: config.timeout || serverConfig.axiosRequestTimeout,
+      timeout: config.timeout || serverConfig.AXIOS_REQUEST_TIME_OUT,
     });
     return axiosResponse;
   }

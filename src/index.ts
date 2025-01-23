@@ -5,17 +5,18 @@ import { Server } from 'socket.io';
 import httpStatusCode from 'http-status-codes';
 import swagger from 'express-joi-swagger-spec';
 import responseTime from 'response-time';
-import blockedAt from 'blocked-at';
+// import blockedAt from 'blocked-at';
+import path from 'path';
+import { fork } from 'child_process';
 
 import RequestContext from './helpers/context';
 import { DEFAULT_LOCALE, isProduction, serverConfig, SUPPORTED_LOCALE } from './config';
 import EmailService from './utils/email';
-import { AppDataSource } from './database/mysql/typeormConfig';
 import constants from './constants';
 import CustomError from './shared/errorHandler/customError';
 import SocketConnector from './socket/socketConnector';
-import processRoleSeeder from './seeders/roleSeeder';
 import v1Router from './routes/v1';
+import databaseConnection from './database/mysql/connection';
 
 const app = express();
 
@@ -24,7 +25,7 @@ if (!isProduction) {
 }
 
 app.use(cors());
-//facing issue - Content-Security-Policy that why i am hiding the helmet yet
+//facing issue - Content-Security-Policy From client side that why i am hiding the helmet yet
 // app.use(helmet());
 
 // request payload middleware
@@ -35,31 +36,36 @@ app.use(express.static('public'));
 
 // This is usually caused by synchronous operations that delay the event loop, such as long loop , disk I/O, or database operations.
 // AsyncHook.init: This is part of the blocked-at package's internal tracking of asynchronous operations.
-blockedAt(
-  (time: any, stack: any, resourceType: any) => {
-    console.log('+++++++++++++++++++++++++++++++++');
-    console.info({ message: `Blocked for ${time}ms` });
-    console.info({ message: `Stack trace:\n${JSON.stringify(stack)}` });
-    console.info({ message: `Resource type: ${JSON.stringify(resourceType)}` });
-  },
-  { threshold: 20 },
-);
+// blockedAt(
+//   (time: any, stack: any, resourceType: any) => {
+//     console.log('+++++++++++++++++++++++++++++++++');
+//     console.info({ message: `Blocked for ${time}ms` });
+//     console.info({ message: `Stack trace:\n${JSON.stringify(stack)}` });
+//     console.info({ message: `Resource type: ${JSON.stringify(resourceType)}` });
+//   },
+//   { threshold: 20 },
+// );
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  pingTimeout: 60000,
+  pingTimeout: 60000, //60 seconds :-  If a client doesn't send a "ping" within 60 seconds, the server will assume that the client is disconnected and close the connection.
   cors: {
-    origin: process.env.CORS_ORIGIN,
-    credentials: true,
+    origin: process.env.CORS_ORIGIN, // only this allowed origins can connect to the Socket.IO server.
+    credentials: true, //allows the client to send cookies and other credentials
   },
 });
 SocketConnector.initialize(io);
 
 (async (): Promise<void> => {
   try {
-    await AppDataSource.initialize();
-    await processRoleSeeder();
+    await databaseConnection();
     console.log({ message: constants.MY_SQL_CONNECTED_SUCCESSFULLY });
+    const databaseInitPath = path.join(__dirname, 'helpers/childProcess/childProcessInit');
+    // Fork the process to run the database initialization
+    const child = fork(databaseInitPath, [], {
+      execArgv: ['-r', 'ts-node/register'], // Use ts-node to run TypeScript files(-r mean require module before script)
+    });
+    child.send({});
   } catch (error) {
     console.log({
       message: constants.MY_SQL_UNABLE_TO_CONNECT,
@@ -103,7 +109,7 @@ const swaggerOptions = {
   defaultSecurity: 'Bearer',
 };
 
-const port = serverConfig.port || constants.PORT;
+const port = serverConfig.PORT || constants.PORT;
 
 // Middleware to initialize request context
 app.use((req: Request, _res: Response, next: NextFunction): void => {
@@ -123,6 +129,7 @@ app.get('/', (_req: Request, res: Response, _next: NextFunction): void => {
 //v1 api router.
 app.use('/api', v1Router);
 
+//server running on this port
 const server = httpServer.listen(port, (): void => {
   console.info(`Started on port : ${port}`);
 });
@@ -134,6 +141,7 @@ swagger.serveSwagger(app, '/swagger', swaggerOptions, {
   responseModelFolderName: 'responseModels',
 });
 
+//middleware is commonly used to handle 404 errors for undefined routes.
 app.all('*', (_req: Request, res: Response, _next: NextFunction): void => {
   res.status(httpStatusCode.NOT_FOUND).send(constants.ROUTE_NOT_FOUND);
 });

@@ -3,13 +3,12 @@ const { env, isProduction, isTest } = loadDotEnv();
 export { isProduction, isTest };
 
 export interface ServerConfig {
-  port: string;
-  axiosRequestTimeout: number;
-  jwtSecretKey: string;
-  emailHost: string;
-  emailUser: string;
-  emailPass: string;
-  //latest
+  PORT: string;
+  AXIOS_REQUEST_TIME_OUT: number;
+  JWT_SECRET_KEY: string;
+  EMAIL_HOST: string;
+  EMAIL_USER: string;
+  EMAIL_PASSWORD: string;
   MYSQL_DB_PORT: number;
   MYSQL_DB_HOST: string;
   MYSQL_DB_NAME: string;
@@ -22,12 +21,12 @@ export interface ServerConfig {
  * Derive all the environment variables from this property instead of using them directly.
  */
 export const serverConfig: ServerConfig = {
-  port: (env.PORT as string) || '3000',
-  axiosRequestTimeout: env.AXIOS_REQUEST_TIMEOUT ? parseInt(env.AXIOS_REQUEST_TIMEOUT) : 30000,
-  jwtSecretKey: (env.JWT_SECRET_KEY as string) || 'some_secret_key',
-  emailHost: (env.EMAIL_HOST as string) || 'smtp.ethereal.email',
-  emailUser: env.EMAIL_USER as string,
-  emailPass: env.EMAIL_PASS as string,
+  PORT: (env.PORT as string) || '3000',
+  AXIOS_REQUEST_TIME_OUT: env.AXIOS_REQUEST_TIMEOUT ? parseInt(env.AXIOS_REQUEST_TIMEOUT) : 30000,
+  JWT_SECRET_KEY: (env.JWT_SECRET_KEY as string) || 'some_secret_key',
+  EMAIL_HOST: (env.EMAIL_HOST as string) || 'smtp.ethereal.email',
+  EMAIL_USER: env.EMAIL_USER as string,
+  EMAIL_PASSWORD: env.EMAIL_PASS as string,
   //latest
   MYSQL_DB_HOST: env.MYSQL_DB_HOST || 'localhost',
   MYSQL_DB_PORT: Number(env.MYSQL_DB_PORT || 0),

@@ -1,8 +1,9 @@
-import { serverConfig } from '@src/config';
-import { JWT_OBJECT } from '@src/types/jwt';
 import jwt from 'jsonwebtoken';
 
-const jwtSecretKey = serverConfig.jwtSecretKey;
+import { serverConfig } from '@src/config';
+import { JWT_OBJECT } from '@src/types/jwt';
+
+const jwtSecretKey = serverConfig.JWT_SECRET_KEY;
 
 export function generateJWT(data: JWT_OBJECT): string {
   const token = jwt.sign(data, jwtSecretKey, { expiresIn: '1d' });
