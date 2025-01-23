@@ -86,8 +86,8 @@ export default class CustomError extends Error {
     return new CustomError(HttpStatusCode.NOT_FOUND, HTTP_STATUS_MESSAGE.NOT_FOUND, [{ messages: [message] }]);
   }
 
-  public static getBadRequestError(message: string): CustomError {
-    return new CustomError(HttpStatusCode.BAD_REQUEST, HTTP_STATUS_MESSAGE.BAD_REQUEST, [{ messages: [message] }]);
+  public static getForbiddenError(message: string): CustomError {
+    return new CustomError(HttpStatusCode.FORBIDDEN, HTTP_STATUS_MESSAGE.BAD_REQUEST, [{ messages: [message] }]);
   }
 
   public static getConflictError(message: string): CustomError {

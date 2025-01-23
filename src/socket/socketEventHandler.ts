@@ -429,7 +429,7 @@ export default class SocketEventHandler {
       throw CustomError.getNotFoundError(USER_MESSAGES.ADMIN_NOT_FOUND);
     }
     if (adminMember.role.name !== RolesEnum.ADMIN) {
-      throw CustomError.getBadRequestError(USER_MESSAGES.YOU_DO_NOT_HAVE_ADMIN_PERMISSION);
+      throw CustomError.getForbiddenError(USER_MESSAGES.YOU_DO_NOT_HAVE_ADMIN_PERMISSION);
     }
     return adminMember;
   }
